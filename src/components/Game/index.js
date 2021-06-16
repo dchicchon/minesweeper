@@ -1,4 +1,5 @@
 import React from "react";
+import "./game.css";
 import Board from "../Board";
 import Dashboard from "../Dashboard";
 
@@ -6,8 +7,8 @@ import Dashboard from "../Dashboard";
 
 const Game = (props) => {
   return (
-    <div>
-      <h1>Minesweeper</h1>
+    <div id="main-game">
+      <h1 className="title">Minesweeper</h1>
       <Board setInPlay={props.setInPlay} boardArray={props.boardArray} />
       {/* <Dashboard /> */}
     </div>

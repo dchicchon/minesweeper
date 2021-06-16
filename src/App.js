@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import MainMenu from "./components/MainMenu";
 import Game from "./components/Game";
+
 function AppState(props) {
   const isPlaying = props.inPlay;
   if (isPlaying) {

@@ -37,14 +37,18 @@ const Board = (props) => {
   const GameOverModal = () => {
     const playAgain = () => {
       setGameOver(false);
-      // createStartingBoard();
+      createStartingBoard();
     };
     // Show modal in the middle of everything
     return (
       <div id="gameOverModal">
         <h1>Game Over!</h1>
-        <button onClick={playAgain}>Play Again?</button>
-        <button onClick={() => props.setInPlay(false)}>Quit</button>
+        <button className="button" onClick={playAgain}>
+          Play Again?
+        </button>
+        <button className="button" onClick={() => props.setInPlay(false)}>
+          Quit
+        </button>
       </div>
     );
   };
@@ -52,6 +56,7 @@ const Board = (props) => {
   const Cell = (props) => {
     let [checked, setChecked] = useState(false);
     let [type, setType] = useState(props.type);
+    let [flag, setFlag] = useState(false);
     // Maybe this will work? Not the most important thing to work on tbh
     // useEffect(() => {
 
@@ -91,13 +96,24 @@ const Board = (props) => {
           if (board[y + 1][x + 1] === "x") num++;
         }
 
-        // Check coordinates in main board
-        // board[y][x] is current coord
-        // board[y-1][x] is top
-        // board[y-1][x+1] is top-right
-        // board[y][x+1] is right
-        // board[y+1][x+1] is bottom-right
-        // board[y+1][x] is bottom
+        if (num === 0) {
+          console.log("0 mines, check other cells");
+          let cells = document.getElementsByClassName("cell");
+          let boardLength = board[0].length;
+          let boardHeight = board.length;
+          console.log("board height:", boardHeight);
+          console.log("board length:", boardLength);
+          // Which cell is this one?
+          let cell = board[y][x];
+          console.log(cells); 
+          
+          // NEED MATHHHH
+
+          // 1 place will be row
+          // 2 place will be col
+          // run depth first search to do this for every cell that has a 0 in it
+        }
+
         setType(num);
       } else {
         // Game over!
@@ -106,10 +122,28 @@ const Board = (props) => {
       setChecked(true); // this will re-render the cell
     };
 
+    let putFlagDown = (event) => {
+      event.preventDefault();
+      if (!checked) setFlag(!flag);
+    };
+
     return (
-      <div className="cell" onClick={cellClick} style={checked ? style : {}}>
-        {checked ? type : " "}
-      </div>
+      <>
+        {flag ? (
+          <div className="cell" onContextMenu={(e) => putFlagDown(e)}>
+            ?
+          </div>
+        ) : (
+          <div
+            className="cell"
+            onClick={cellClick}
+            onContextMenu={(e) => putFlagDown(e)}
+            style={checked ? style : {}}
+          >
+            {checked ? type : " "}
+          </div>
+        )}
+      </>
     );
   };
 
@@ -118,7 +152,6 @@ const Board = (props) => {
 
   const renderBoard = (board) => {
     console.log("RENDER BOARD");
-    console.log(board);
     let returnBoard = [];
 
     // At some point here, we should randomize if a cell is a mine, number, or nothing
