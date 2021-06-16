@@ -1,0 +1,20 @@
+.cell {
+  border: 1px solid black;
+  padding: 1rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  max-width: 0.75rem;
+  max-height: 0.75rem;
+}
+
+.row {
+  display: flex;
+}
+
+#gameOverModal {
+  position: absolute;
+  transform: translate(50%, -216%);
+  background: white;
+  border: 1px solid black;
+  padding: 1rem;
+}
