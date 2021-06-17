@@ -1,7 +1,129 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./board.css";
 
 // Should be initial board and main board
+
+const Cell = (props) => {
+  let [checked, setChecked] = useState(false);
+  let [type, setType] = useState(props.type);
+  let [flag, setFlag] = useState(false);
+  // Maybe this will work? Not the most important thing to work on tbh
+  // useEffect(() => {
+  //   console.log("Update Cell");
+  //   setType(props.type);
+  // }, [props.board]);
+
+  let style = {
+    background: type === "x" ? "red" : "",
+  };
+
+  let cellClick = () => {
+    if (type !== "x") {
+      // Check board to see if there are any 'o's left
+      let { x } = props;
+      let { y } = props;
+      let num = 0;
+
+      // This isnt working I think
+      // console.log(`Cell Coordinate: [${x},${y}]`);
+      for (let row = -1; row < 2; row++) {
+        for (let col = -1; col < 2; col++) {
+          if (row === 0 && col === 0) continue;
+          let validRow = false;
+          let validCol = false;
+          let checkRow = 0;
+          let checkCol = 0;
+          if (y + row >= 0 && y + row < props.board.length) {
+            validRow = true;
+            checkRow = y + row;
+          } else {
+            continue;
+          }
+          if (x + col >= 0 && x + col < props.board[0].length) {
+            validCol = true;
+            checkCol = x + col;
+          } else {
+            continue;
+          }
+          if (validRow && validCol) {
+            // console.log(`Check coordinate: [${checkRow}, ${checkCol}]`);
+            let validCell = props.board[checkRow][checkCol];
+            if (validCell === "x") num++;
+          }
+        }
+      }
+      // This works as long as were in the center somewhat
+      // Dependent on y! Make this better later forsure bb
+
+      if (num === 0) {
+        // we only click since all other cells not be mines
+        let cells = document.getElementsByClassName("cell");
+        // Check surrounding cells
+        for (let j = -1; j < 2; j++) {
+          for (let i = -1; i < 2; i++) {
+            if (j === 0 && i === 0) continue; // dont check the current cell dummy
+            let index = parseInt(`${y + j}${x + i}`);
+            if (index < 0 || index >= cells.length) continue;
+            let surroundingCell = cells[parseInt(`${y + j}${x + i}`)]; // we have the cell, now get reference from board
+            console.log("CHECK CELL");
+            console.log(surroundingCell);
+            // console.log("TYPE:", surroundingCell.type);
+            // console.log("This is broken for now, fix later");
+            surroundingCell.click();
+          }
+        }
+      }
+
+      let copyBoard = props.board.slice();
+      copyBoard[y][x] = num;
+      props.setBoard(copyBoard);
+
+      // You win!
+      if (checkWin(copyBoard)) props.setGameOver(true);
+
+      setType(num);
+    } else {
+      // Clicked on mine, game over!
+      props.setGameOver(true);
+    }
+    setChecked(true); // this will re-render the cell
+  };
+
+  const checkWin = (checkBoard) => {
+    // Check here if won
+    for (let o = 0; o < checkBoard.length; o++) {
+      for (let p = 0; p < checkBoard[0].length; p++) {
+        let cellToCheck = checkBoard[o][p];
+        if (cellToCheck === "o") return false;
+      }
+    }
+    return true;
+  };
+
+  let putFlagDown = (event) => {
+    event.preventDefault();
+    if (!checked) setFlag(!flag);
+  };
+
+  return (
+    <>
+      {flag ? (
+        <div className="cell" onContextMenu={(e) => putFlagDown(e)}>
+          ?
+        </div>
+      ) : (
+        <div
+          className="cell"
+          onClick={cellClick}
+          onContextMenu={(e) => putFlagDown(e)}
+          style={checked ? style : {}}
+        >
+          {checked ? type : " "}
+        </div>
+      )}
+    </>
+  );
+};
 
 const Board = (props) => {
   let [board, setBoard] = useState([]);
@@ -11,6 +133,11 @@ const Board = (props) => {
   useEffect(() => {
     createStartingBoard();
   }, []);
+
+  // useEffect(() => {
+  //   console.log("Game over?");
+  //   createStartingBoard();
+  // }, [gameOver]);
 
   const createStartingBoard = () => {
     console.log("STARTING BOARD");
@@ -25,7 +152,7 @@ const Board = (props) => {
         else {
           // Check cells around it to pass in a certain value
           // Look above
-          row.push("");
+          row.push("o");
         }
       }
       mainBoard.push(row);
@@ -33,11 +160,13 @@ const Board = (props) => {
     setBoard(mainBoard);
   };
 
+  // Make a check win function
+
   // This works
   const GameOverModal = () => {
     const playAgain = () => {
-      setGameOver(false);
       createStartingBoard();
+      setGameOver(false);
     };
     // Show modal in the middle of everything
     return (
@@ -50,103 +179,6 @@ const Board = (props) => {
           Quit
         </button>
       </div>
-    );
-  };
-
-  const Cell = (props) => {
-    let [checked, setChecked] = useState(false);
-    let [type, setType] = useState(props.type);
-    let [flag, setFlag] = useState(false);
-    // Maybe this will work? Not the most important thing to work on tbh
-    // useEffect(() => {
-
-    // }, [])
-
-    let style = {
-      background: type === "x" ? "red" : "",
-    };
-
-    let cellClick = () => {
-      if (type !== "x") {
-        let { x } = props;
-        let { y } = props;
-        let num = 0;
-        // This works as long as were in the center somewhat
-        // Dependent on y! Make this better later forsure bb
-        if (y === 0) {
-          if (board[y][x + 1] === "x") num++;
-          if (board[y][x - 1] === "x") num++;
-          if (board[y + 1][x] === "x") num++;
-          if (board[y + 1][x - 1] === "x") num++;
-          if (board[y + 1][x + 1] === "x") num++;
-        } else if (y === board.length - 1) {
-          if (board[y - 1][x] === "x") num++;
-          if (board[y - 1][x + 1] === "x") num++;
-          if (board[y - 1][x - 1] === "x") num++;
-          if (board[y][x + 1] === "x") num++;
-          if (board[y][x - 1] === "x") num++;
-        } else {
-          if (board[y - 1][x] === "x") num++;
-          if (board[y - 1][x + 1] === "x") num++;
-          if (board[y - 1][x - 1] === "x") num++;
-          if (board[y][x + 1] === "x") num++;
-          if (board[y][x - 1] === "x") num++;
-          if (board[y + 1][x] === "x") num++;
-          if (board[y + 1][x - 1] === "x") num++;
-          if (board[y + 1][x + 1] === "x") num++;
-        }
-
-        if (num === 0) {
-          console.log("0 mines, check other cells");
-          let cells = document.getElementsByClassName("cell");
-          let boardLength = board[0].length;
-          let boardHeight = board.length;
-          console.log("board height:", boardHeight);
-          console.log("board length:", boardLength);
-          // Which cell is this one?
-          let cell = board[y][x];
-          // Check top
-          // let top = parseInt(`${}`)
-          // cells[${}`${}`]
-          console.log(cells); 
-
-          // NEED MATHHHH
-
-          // 1 place will be row
-          // 2 place will be col
-          // run depth first search to do this for every cell that has a 0 in it
-        }
-
-        setType(num);
-      } else {
-        // Game over!
-        setGameOver(true);
-      }
-      setChecked(true); // this will re-render the cell
-    };
-
-    let putFlagDown = (event) => {
-      event.preventDefault();
-      if (!checked) setFlag(!flag);
-    };
-
-    return (
-      <>
-        {flag ? (
-          <div className="cell" onContextMenu={(e) => putFlagDown(e)}>
-            ?
-          </div>
-        ) : (
-          <div
-            className="cell"
-            onClick={cellClick}
-            onContextMenu={(e) => putFlagDown(e)}
-            style={checked ? style : {}}
-          >
-            {checked ? type : " "}
-          </div>
-        )}
-      </>
     );
   };
 
@@ -165,7 +197,17 @@ const Board = (props) => {
     for (let i = 0; i < board.length; i++) {
       let row = [];
       for (let j = 0; j < board[i].length; j++) {
-        let cell = <Cell key={`${i}${j}`} y={i} x={j} type={board[i][j]} />;
+        let cell = (
+          <Cell
+            key={`${i}${j}`}
+            y={i}
+            x={j}
+            board={board}
+            setBoard={setBoard}
+            setGameOver={setGameOver}
+            type={board[i][j]}
+          />
+        );
         row.push(cell);
       }
 
@@ -182,7 +224,6 @@ const Board = (props) => {
     <div id="board">
       {renderBoard(board)}
       {gameOver ? <GameOverModal /> : ""}
-      {/* Put grid here */}
     </div>
   );
 };
