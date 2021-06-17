@@ -8,16 +8,21 @@ const Cell = (props) => {
   let [type, setType] = useState(props.type);
   let [flag, setFlag] = useState(false);
   // Maybe this will work? Not the most important thing to work on tbh
-  // useEffect(() => {
-  //   console.log("Update Cell");
-  //   setType(props.type);
-  // }, [props.board]);
+  useEffect(() => {
+    console.log("Update Cell");
+    setType(props.type);
+    setChecked(false);
+    setFlag(false);
+  }, [props.gameOver]);
 
   let style = {
     background: type === "x" ? "red" : "",
   };
 
   let cellClick = () => {
+    if (checked) {
+      return;
+    }
     if (type !== "x") {
       // Check board to see if there are any 'o's left
       let { x } = props;
@@ -25,7 +30,6 @@ const Cell = (props) => {
       let num = 0;
 
       // This isnt working I think
-      // console.log(`Cell Coordinate: [${x},${y}]`);
       for (let row = -1; row < 2; row++) {
         for (let col = -1; col < 2; col++) {
           if (row === 0 && col === 0) continue;
@@ -46,7 +50,6 @@ const Cell = (props) => {
             continue;
           }
           if (validRow && validCol) {
-            // console.log(`Check coordinate: [${checkRow}, ${checkCol}]`);
             let validCell = props.board[checkRow][checkCol];
             if (validCell === "x") num++;
           }
@@ -62,11 +65,15 @@ const Cell = (props) => {
         for (let j = -1; j < 2; j++) {
           for (let i = -1; i < 2; i++) {
             if (j === 0 && i === 0) continue; // dont check the current cell dummy
+            if (y + j < 0 || y + j >= props.board.length) continue;
+            if (x + i < 0 || x + i >= props.board[0].length) continue;
+
             let index = parseInt(`${y + j}${x + i}`);
             if (index < 0 || index >= cells.length) continue;
             let surroundingCell = cells[parseInt(`${y + j}${x + i}`)]; // we have the cell, now get reference from board
-            console.log("CHECK CELL");
-            console.log(surroundingCell);
+            // console.log("CHECK CELL");
+            // console.log(`Check coordinate: [${y + j}, ${x + i}]`);
+            // console.log(surroundingCell);
             // console.log("TYPE:", surroundingCell.type);
             // console.log("This is broken for now, fix later");
             surroundingCell.click();
@@ -97,6 +104,7 @@ const Cell = (props) => {
         if (cellToCheck === "o") return false;
       }
     }
+    console.log("YOU WIN!");
     return true;
   };
 
@@ -203,6 +211,7 @@ const Board = (props) => {
             y={i}
             x={j}
             board={board}
+            gameOver={gameOver}
             setBoard={setBoard}
             setGameOver={setGameOver}
             type={board[i][j]}
