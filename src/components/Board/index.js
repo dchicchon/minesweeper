@@ -105,8 +105,11 @@ const Board = (props) => {
           console.log("board length:", boardLength);
           // Which cell is this one?
           let cell = board[y][x];
+          // Check top
+          // let top = parseInt(`${}`)
+          // cells[${}`${}`]
           console.log(cells); 
-          
+
           // NEED MATHHHH
 
           // 1 place will be row
