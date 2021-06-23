@@ -9,18 +9,33 @@ function AppState(props) {
       <Game
         inPlay={props.inPlay}
         setInPlay={props.setInPlay}
-        boardArray={[10, 10]}
+        boardArray={props.boardSize}
       />
     );
   } else {
-    return <MainMenu inPlay={props.inPlay} setInPlay={props.setInPlay} />;
+    return (
+      <MainMenu
+        inPlay={props.inPlay}
+        setInPlay={props.setInPlay}
+        boardSize={props.boardSize}
+        setBoardSize={props.setBoardSize}
+      />
+    );
   }
 }
 
 const App = () => {
   const [inPlay, setInPlay] = useState(false);
+  const [boardSize, setBoardSize] = useState([10, 10]);
 
-  return <AppState inPlay={inPlay} setInPlay={setInPlay} />;
+  return (
+    <AppState
+      inPlay={inPlay}
+      setInPlay={setInPlay}
+      boardSize={boardSize}
+      setBoardSize={setBoardSize}
+    />
+  );
 };
 
 export default App;

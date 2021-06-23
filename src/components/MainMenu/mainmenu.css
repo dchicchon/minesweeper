@@ -3,6 +3,11 @@ html {
   font-family: monospace;
 }
 
+input,
+label {
+  display: block;
+}
+
 .button {
   padding: 0.5rem;
   color: gold;

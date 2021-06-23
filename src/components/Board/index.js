@@ -7,23 +7,23 @@ const Cell = (props) => {
   let [checked, setChecked] = useState(false);
   let [type, setType] = useState(props.type);
   let [flag, setFlag] = useState(false);
-  // Maybe this will work? Not the most important thing to work on tbh
+
+  // Do this when gameOverState changes
   useEffect(() => {
-    console.log("Update Cell");
     setType(props.type);
     setChecked(false);
     setFlag(false);
-  }, [props.gameOver]);
+  }, [props.gameNum]);
 
   let style = {
     background: type === "x" ? "red" : "",
   };
 
+  // THE MOST IMPORTANT FUNCTION IN THIS SCRIPT
   let cellClick = () => {
-    if (checked) {
-      return;
-    }
-    if (type !== "x") {
+    if (checked) return;
+    if (type === "x") props.endGame(false);
+    else {
       // Check board to see if there are any 'o's left
       let { x } = props;
       let { y } = props;
@@ -67,16 +67,16 @@ const Cell = (props) => {
             if (j === 0 && i === 0) continue; // dont check the current cell dummy
             if (y + j < 0 || y + j >= props.board.length) continue;
             if (x + i < 0 || x + i >= props.board[0].length) continue;
-
             let index = parseInt(`${y + j}${x + i}`);
             if (index < 0 || index >= cells.length) continue;
             let surroundingCell = cells[parseInt(`${y + j}${x + i}`)]; // we have the cell, now get reference from board
-            // console.log("CHECK CELL");
-            // console.log(`Check coordinate: [${y + j}, ${x + i}]`);
-            // console.log(surroundingCell);
-            // console.log("TYPE:", surroundingCell.type);
-            // console.log("This is broken for now, fix later");
-            surroundingCell.click();
+            // Later on, implement a function that makes this a timed event
+            let time = Math.floor(Math.random() * 150) + 100;
+            function checkSurroundingCell() {
+              surroundingCell.click();
+            }
+            setTimeout(checkSurroundingCell, time);
+            // surroundingCell.click();
           }
         }
       }
@@ -86,26 +86,13 @@ const Cell = (props) => {
       props.setBoard(copyBoard);
 
       // You win!
-      if (checkWin(copyBoard)) props.setGameOver(true);
+      if (props.checkWin(copyBoard)) {
+        props.endGame(true);
+      }
 
       setType(num);
-    } else {
-      // Clicked on mine, game over!
-      props.setGameOver(true);
     }
     setChecked(true); // this will re-render the cell
-  };
-
-  const checkWin = (checkBoard) => {
-    // Check here if won
-    for (let o = 0; o < checkBoard.length; o++) {
-      for (let p = 0; p < checkBoard[0].length; p++) {
-        let cellToCheck = checkBoard[o][p];
-        if (cellToCheck === "o") return false;
-      }
-    }
-    console.log("YOU WIN!");
-    return true;
   };
 
   let putFlagDown = (event) => {
@@ -133,22 +120,37 @@ const Cell = (props) => {
   );
 };
 
+const GameOverModal = (props) => {
+  const playAgain = () => {
+    props.setGameNum(props.gameNum + 1);
+    props.createStartingBoard();
+    props.setGameOverModal("n");
+  };
+  // Show modal in the middle of everything
+  return (
+    <div id="gameOverModal">
+      {props.context === "win" ? <h1>You Win!</h1> : <h1>Game Over!</h1>}
+      <button className="button" onClick={playAgain}>
+        Play Again?
+      </button>
+      <button className="button" onClick={() => props.setInPlay(false)}>
+        Quit
+      </button>
+    </div>
+  );
+};
+
 const Board = (props) => {
   let [board, setBoard] = useState([]);
-  let [gameOver, setGameOver] = useState(false);
+  let [gameNum, setGameNum] = useState(1);
+  let [showGameOverModal, setGameOverModal] = useState("n");
 
   // Runs only on the first render
   useEffect(() => {
     createStartingBoard();
   }, []);
 
-  // useEffect(() => {
-  //   console.log("Game over?");
-  //   createStartingBoard();
-  // }, [gameOver]);
-
   const createStartingBoard = () => {
-    console.log("STARTING BOARD");
     let initialBoard = props.boardArray.slice();
     let mainBoard = [];
     // This is where we should start doing the random mines cells
@@ -168,33 +170,35 @@ const Board = (props) => {
     setBoard(mainBoard);
   };
 
+  const endGame = (didWin) => {
+    if (didWin) {
+      props.setGamesWon(props.gamesWon + 1);
+      setGameOverModal("win");
+    } else {
+      props.setGamesLost(props.gamesLost + 1);
+      setGameOverModal("lose");
+    }
+  };
+
+  const checkWin = (checkBoard) => {
+    // Check here if won
+    for (let o = 0; o < checkBoard.length; o++) {
+      for (let p = 0; p < checkBoard[0].length; p++) {
+        let cellToCheck = checkBoard[o][p];
+        if (cellToCheck === "o") return false;
+      }
+    }
+    return true;
+  };
+
   // Make a check win function
 
   // This works
-  const GameOverModal = () => {
-    const playAgain = () => {
-      createStartingBoard();
-      setGameOver(false);
-    };
-    // Show modal in the middle of everything
-    return (
-      <div id="gameOverModal">
-        <h1>Game Over!</h1>
-        <button className="button" onClick={playAgain}>
-          Play Again?
-        </button>
-        <button className="button" onClick={() => props.setInPlay(false)}>
-          Quit
-        </button>
-      </div>
-    );
-  };
 
   // cell click should trigger renderBoard again? the purpose of renderboard is to
   // show the user what the board looks like so far
 
   const renderBoard = (board) => {
-    console.log("RENDER BOARD");
     let returnBoard = [];
 
     // At some point here, we should randomize if a cell is a mine, number, or nothing
@@ -211,9 +215,10 @@ const Board = (props) => {
             y={i}
             x={j}
             board={board}
-            gameOver={gameOver}
+            endGame={endGame}
+            checkWin={checkWin}
             setBoard={setBoard}
-            setGameOver={setGameOver}
+            gameNum={gameNum}
             type={board[i][j]}
           />
         );
@@ -232,7 +237,18 @@ const Board = (props) => {
   return (
     <div id="board">
       {renderBoard(board)}
-      {gameOver ? <GameOverModal /> : ""}
+      {showGameOverModal === "n" ? (
+        ""
+      ) : (
+        <GameOverModal
+          setGameNum={setGameNum}
+          gameNum={gameNum}
+          setGameOverModal={setGameOverModal}
+          createStartingBoard={createStartingBoard}
+          context={showGameOverModal}
+          setInPlay={props.setInPlay}
+        />
+      )}
     </div>
   );
 };
