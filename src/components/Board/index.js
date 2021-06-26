@@ -30,8 +30,6 @@ const Cell = (props) => {
     else if (type === "x") props.endGame(false);
     // if cell is 'x', game is over!
     else {
-      // Check board to see if there are any 'o's left
-
       // x is column, y is row
       let { x, y } = props;
       let mineNum = 0;
@@ -128,6 +126,7 @@ const GameOverModal = (props) => {
   function playAgain() {
     console.log("Play again");
     props.setGameNum(props.gameNum + 1);
+    props.setBoard([]);
     props.setGameStatus(0);
   }
 
@@ -187,9 +186,9 @@ const Board = (props) => {
 
   const checkWin = (checkBoard) => {
     // Check here if won
-    for (let o = 0; o < checkBoard.length; o++) {
-      for (let p = 0; p < checkBoard[0].length; p++) {
-        let cellToCheck = checkBoard[o][p];
+    for (let row = 0; row < checkBoard.length; row++) {
+      for (let col = 0; col < checkBoard[0].length; col++) {
+        let cellToCheck = checkBoard[row][col];
         if (cellToCheck === "o") return false;
       }
     }
@@ -205,27 +204,27 @@ const Board = (props) => {
     // Odds 0.1 that its a mine
     // 0.7 that its a number
     // 0.2 that its nothing
-    for (let i = 0; i < board.length; i++) {
+    for (let rowNum = 0; rowNum < board.length; rowNum++) {
       let row = [];
-      for (let j = 0; j < board[i].length; j++) {
+      for (let colNum = 0; colNum < board[rowNum].length; colNum++) {
         let cell = (
           <Cell
-            key={`${i}${j}`}
-            y={i}
-            x={j}
+            key={`${rowNum}${colNum}`}
+            y={rowNum}
+            x={colNum}
             board={board}
             endGame={endGame}
             checkWin={checkWin}
             setBoard={setBoard}
             gameNum={props.gameNum}
-            type={board[i][j]}
+            type={board[rowNum][colNum]}
           />
         );
         row.push(cell);
       }
 
       returnBoard.push(
-        <div className="row" key={i}>
+        <div className="row" key={rowNum}>
           {row}
         </div>
       );
@@ -244,6 +243,7 @@ const Board = (props) => {
           gameNum={props.gameNum}
           setGameNum={props.setGameNum}
           gameStatus={props.gameStatus}
+          setBoard={setBoard}
           setGameStatus={props.setGameStatus}
           setInPlay={props.setInPlay}
         />
