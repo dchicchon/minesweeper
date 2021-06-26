@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import "./board.css";
 
 // Should be initial board and main board
@@ -8,8 +8,13 @@ const Cell = (props) => {
   let [type, setType] = useState(props.type);
   let [flag, setFlag] = useState(false);
 
-  // Do this when gameOverState changes
+  // When the game num changes, go ahead and rerender this cell
+
+  // Whats happening is that this is happening before we make a new board.
+  // bad
+
   useEffect(() => {
+    console.log("Game over, rerender cell");
     setType(props.type);
     setChecked(false);
     setFlag(false);
@@ -22,75 +27,74 @@ const Cell = (props) => {
   // THE MOST IMPORTANT FUNCTION IN THIS SCRIPT
   let cellClick = () => {
     if (checked) return;
-    if (type === "x") props.endGame(false);
+    else if (type === "x") props.endGame(false);
+    // if cell is 'x', game is over!
     else {
       // Check board to see if there are any 'o's left
-      let { x } = props;
-      let { y } = props;
-      let num = 0;
 
-      // This isnt working I think
-      for (let row = -1; row < 2; row++) {
-        for (let col = -1; col < 2; col++) {
-          if (row === 0 && col === 0) continue;
-          let validRow = false;
-          let validCol = false;
-          let checkRow = 0;
-          let checkCol = 0;
-          if (y + row >= 0 && y + row < props.board.length) {
-            validRow = true;
-            checkRow = y + row;
-          } else {
-            continue;
-          }
-          if (x + col >= 0 && x + col < props.board[0].length) {
-            validCol = true;
-            checkCol = x + col;
-          } else {
-            continue;
-          }
-          if (validRow && validCol) {
-            let validCell = props.board[checkRow][checkCol];
-            if (validCell === "x") num++;
-          }
+      // x is column, y is row
+      let { x, y } = props;
+      let mineNum = 0;
+
+      // 0   1   2
+      // o | o | o  0
+      // x | o | x  1
+      // o | x | o  2
+      // Current Coord: (1,1)
+      // use our cells current coordinate and add it to
+      // our for loops to check the surrounding cells
+
+      for (let row = -1; row <= 1; row++) {
+        for (let col = -1; col <= 1; col++) {
+          if (row === 0 && col === 0) continue; // dont check current cell
+          if (y + row < 0 || y + row >= props.board.length) continue; // dont check y out of bounds
+          if (x + col < 0 || x + col >= props.board[0].length) continue; // dont check x out of bounds
+          let thisCell = props.board[y + row][x + col]; // get the value at this coordinate
+          if (thisCell === "x") mineNum++; // if this cell has a mine, add to num
         }
       }
+
       // This works as long as were in the center somewhat
       // Dependent on y! Make this better later forsure bb
 
-      if (num === 0) {
+      // only do this if number of mines is 0
+      if (mineNum === 0) {
         // we only click since all other cells not be mines
         let cells = document.getElementsByClassName("cell");
+        // Should we split up cells based on our board array?
         // Check surrounding cells
+
+        // what is x and y?
         for (let j = -1; j < 2; j++) {
           for (let i = -1; i < 2; i++) {
             if (j === 0 && i === 0) continue; // dont check the current cell dummy
+
             if (y + j < 0 || y + j >= props.board.length) continue;
             if (x + i < 0 || x + i >= props.board[0].length) continue;
             let index = parseInt(`${y + j}${x + i}`);
             if (index < 0 || index >= cells.length) continue;
             let surroundingCell = cells[parseInt(`${y + j}${x + i}`)]; // we have the cell, now get reference from board
+
             // Later on, implement a function that makes this a timed event
             let time = Math.floor(Math.random() * 150) + 100;
             function checkSurroundingCell() {
               surroundingCell.click();
             }
             setTimeout(checkSurroundingCell, time);
-            // surroundingCell.click();
           }
         }
       }
 
-      let copyBoard = props.board.slice();
-      copyBoard[y][x] = num;
-      props.setBoard(copyBoard);
+      let copyBoard = props.board.slice(); // get our current board
+      copyBoard[y][x] = mineNum;
+      props.setBoard(copyBoard); // maybe this is bad too
 
       // You win!
       if (props.checkWin(copyBoard)) {
         props.endGame(true);
       }
 
-      setType(num);
+      setType(mineNum);
     }
     setChecked(true); // this will re-render the cell
   };
@@ -121,15 +125,16 @@ const Cell = (props) => {
 };
 
 const GameOverModal = (props) => {
-  const playAgain = () => {
+  function playAgain() {
+    console.log("Play again");
     props.setGameNum(props.gameNum + 1);
-    props.createStartingBoard();
-    props.setGameOverModal("n");
-  };
+    props.setGameStatus(0);
+  }
+
   // Show modal in the middle of everything
   return (
     <div id="gameOverModal">
-      {props.context === "win" ? <h1>You Win!</h1> : <h1>Game Over!</h1>}
+      {props.gameStatus === 2 ? <h1>You Win!</h1> : <h1>Game Over!</h1>}
       <button className="button" onClick={playAgain}>
         Play Again?
       </button>
@@ -142,21 +147,19 @@ const GameOverModal = (props) => {
 
 const Board = (props) => {
   let [board, setBoard] = useState([]);
-  let [gameNum, setGameNum] = useState(1);
-  let [showGameOverModal, setGameOverModal] = useState("n");
 
-  // Runs only on the first render
+  // Runs anytime the game number changes
   useEffect(() => {
+    console.log("Create starting board");
     createStartingBoard();
-  }, []);
+  }, [props.gameNum]);
 
   const createStartingBoard = () => {
-    let initialBoard = props.boardArray.slice();
     let mainBoard = [];
     // This is where we should start doing the random mines cells
-    for (let i = 0; i < initialBoard[0]; i++) {
+    for (let i = 0; i < props.boardArray[0]; i++) {
       let row = [];
-      for (let j = 0; j < initialBoard[1]; j++) {
+      for (let j = 0; j < props.boardArray[1]; j++) {
         const random = Math.random();
         if (random < 0.2) row.push("x");
         else {
@@ -167,16 +170,18 @@ const Board = (props) => {
       }
       mainBoard.push(row);
     }
+    console.log("New board");
+    console.log(mainBoard);
     setBoard(mainBoard);
   };
 
   const endGame = (didWin) => {
     if (didWin) {
       props.setGamesWon(props.gamesWon + 1);
-      setGameOverModal("win");
+      props.setGameStatus(2);
     } else {
+      props.setGameStatus(1);
       props.setGamesLost(props.gamesLost + 1);
-      setGameOverModal("lose");
     }
   };
 
@@ -191,17 +196,11 @@ const Board = (props) => {
     return true;
   };
 
-  // Make a check win function
-
-  // This works
-
-  // cell click should trigger renderBoard again? the purpose of renderboard is to
-  // show the user what the board looks like so far
-
+  // I think that this is not running once the game ends
   const renderBoard = (board) => {
     let returnBoard = [];
 
-    // At some point here, we should randomize if a cell is a mine, number, or nothing
+    console.log("Render board");
 
     // Odds 0.1 that its a mine
     // 0.7 that its a number
@@ -218,7 +217,7 @@ const Board = (props) => {
             endGame={endGame}
             checkWin={checkWin}
             setBoard={setBoard}
-            gameNum={gameNum}
+            gameNum={props.gameNum}
             type={board[i][j]}
           />
         );
@@ -237,15 +236,15 @@ const Board = (props) => {
   return (
     <div id="board">
       {renderBoard(board)}
-      {showGameOverModal === "n" ? (
+      {props.gameStatus === 0 ? (
         ""
       ) : (
         <GameOverModal
-          setGameNum={setGameNum}
-          gameNum={gameNum}
-          setGameOverModal={setGameOverModal}
           createStartingBoard={createStartingBoard}
-          context={showGameOverModal}
+          gameNum={props.gameNum}
+          setGameNum={props.setGameNum}
+          gameStatus={props.gameStatus}
+          setGameStatus={props.setGameStatus}
           setInPlay={props.setInPlay}
         />
       )}

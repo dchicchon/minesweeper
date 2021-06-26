@@ -1,23 +1,36 @@
 import React, { useState, useEffect } from "react";
 import { pad } from "lodash";
 import "./dashboard.css";
-const Dashboard = (props) => {
-  let [time, setTime] = useState(0);
 
+const Timer = (props) => {
+  // Set to 0 on game restart
   // useEffect(() => {
-  //   let timer = setInterval(() => {
-  //     console.log("Update");
-  //     setTime(time + 1);
-  //   }, 1000);
-  // }, []);
+  //   console.log("Game restart");
+  //   setSeconds(0);
+  // }, [props.gameNum]);
+  // function formatTime() {
+  //   return [pad(parseInt(seconds / 60)), pad(seconds % 60)].join(":");
+  // }
+  // return <p>Time: {seconds}</p>;
+};
 
-  function formatTime() {
-    return [pad(parseInt(time / 60)), pad(time % 60)].join(":");
-  }
+const Dashboard = (props) => {
+  // Change anytime gameNum changes
+  let [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSeconds(seconds + 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  });
+
+  useEffect(() => {}, [props.gameNum]);
 
   return (
     <div id="dashboard">
-      <p>Time: {formatTime()} </p>
+      {/* <Timer gameNum={props.gameNum} /> */}
+      <p>Time: {seconds}</p>
       <p>Games Won: {props.gamesWon}</p>
       <p>Games Lost: {props.gamesLost} </p>
       <p>Tiles Left: 25</p>

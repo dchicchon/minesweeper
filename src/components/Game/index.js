@@ -8,6 +8,9 @@ import Dashboard from "../Dashboard";
 const Game = (props) => {
   let [gamesWon, setGamesWon] = useState(0);
   let [gamesLost, setGamesLost] = useState(0);
+  let [gameNum, setGameNum] = useState(0); // anytime game num change, rerender the dashboard for timer sake
+  let [gameStatus, setGameStatus] = useState(0); // 0 is active, 1 is game lost, 2 is game won
+
   return (
     <div id="main-game">
       <h1 className="title">Minesweeper</h1>
@@ -16,10 +19,14 @@ const Game = (props) => {
         boardArray={props.boardArray}
         gamesWon={gamesWon}
         gamesLost={gamesLost}
-        setGamesLost={setGamesWon}
+        gameNum={gameNum}
+        gameStatus={gameStatus}
+        setGameStatus={setGameStatus}
+        setGameNum={setGameNum}
+        setGamesWon={setGamesWon}
         setGamesLost={setGamesLost}
       />
-      <Dashboard gamesWon={gamesWon} gamesLost={gamesLost} />
+      <Dashboard gamesWon={gamesWon} gamesLost={gamesLost} gameNum={gameNum} />
     </div>
   );
 };
