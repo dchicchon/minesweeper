@@ -14,7 +14,6 @@ const Cell = (props) => {
   // bad
 
   useEffect(() => {
-    console.log("Game over, rerender cell");
     setType(props.type);
     setChecked(false);
     setFlag(false);
@@ -124,8 +123,7 @@ const Cell = (props) => {
 
 const GameOverModal = (props) => {
   function playAgain() {
-    console.log("Play again");
-    props.setGameNum(props.gameNum + 1);
+    props.setGameNum((prevState) => prevState + 1);
     props.setBoard([]);
     props.setGameStatus(0);
   }
@@ -149,16 +147,16 @@ const Board = (props) => {
 
   // Runs anytime the game number changes
   useEffect(() => {
-    console.log("Create starting board");
+    console.log("Create Starting Board");
     createStartingBoard();
   }, [props.gameNum]);
 
   const createStartingBoard = () => {
     let mainBoard = [];
     // This is where we should start doing the random mines cells
-    for (let i = 0; i < props.boardArray[0]; i++) {
+    for (let i = 0; i < 10; i++) {
       let row = [];
-      for (let j = 0; j < props.boardArray[1]; j++) {
+      for (let j = 0; j < 10; j++) {
         const random = Math.random();
         if (random < 0.2) row.push("x");
         else {
@@ -169,18 +167,16 @@ const Board = (props) => {
       }
       mainBoard.push(row);
     }
-    console.log("New board");
-    console.log(mainBoard);
     setBoard(mainBoard);
   };
 
   const endGame = (didWin) => {
     if (didWin) {
-      props.setGamesWon(props.gamesWon + 1);
+      props.setGamesWon((prevState) => prevState + 1);
       props.setGameStatus(2);
     } else {
       props.setGameStatus(1);
-      props.setGamesLost(props.gamesLost + 1);
+      props.setGamesLost((prevState) => prevState + 1);
     }
   };
 
@@ -198,8 +194,6 @@ const Board = (props) => {
   // I think that this is not running once the game ends
   const renderBoard = (board) => {
     let returnBoard = [];
-
-    console.log("Render board");
 
     // Odds 0.1 that its a mine
     // 0.7 that its a number

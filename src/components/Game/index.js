@@ -16,7 +16,6 @@ const Game = (props) => {
       <h1 className="title">Minesweeper</h1>
       <Board
         setInPlay={props.setInPlay}
-        boardArray={props.boardArray}
         gamesWon={gamesWon}
         gamesLost={gamesLost}
         gameNum={gameNum}
@@ -26,7 +25,12 @@ const Game = (props) => {
         setGamesWon={setGamesWon}
         setGamesLost={setGamesLost}
       />
-      <Dashboard gamesWon={gamesWon} gamesLost={gamesLost} gameNum={gameNum} />
+      <Dashboard
+        gameStatus={gameStatus}
+        gamesWon={gamesWon}
+        gamesLost={gamesLost}
+        gameNum={gameNum}
+      />
     </div>
   );
 };
