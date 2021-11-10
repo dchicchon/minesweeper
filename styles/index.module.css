@@ -1,0 +1,23 @@
+#minesweeper {
+    padding: 15px;
+    background: #2a3846;
+    min-height: 100vh;
+}
+
+#minesweeper input,
+#minesweeper label {
+    display: block;
+}
+
+
+
+#main_menu {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: gold;
+    background: #2a3846;
+}
+
