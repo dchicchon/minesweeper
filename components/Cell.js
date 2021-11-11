@@ -11,7 +11,6 @@ const Cell = (props) => {
     let [checkedStyle, setCheckedStyle] = useState({});
     // When the game num changes, go ahead and rerender this cell
     useEffect(() => {
-        console.log('update cell')
         // based on props.gameNum, we do things diff
         // let index = props.gameNum % 5; // if i want to change the color
         let index = 0;
