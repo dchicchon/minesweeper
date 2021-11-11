@@ -1,65 +1,81 @@
 import React, { useState, useEffect } from "react";
 import Cell from './Cell'
 import styles from '../styles/game.module.css'
+
 const Board = (props) => {
     let [board, setBoard] = useState([]);
+    let [cellsToWin, setCellsToWin] = useState(0);
     let [renderedBoard, setRenderedBoard] = useState([]);
     // Runs anytime the game number changes
     useEffect(() => {
-        createStartingBoard();
+        init();
     }, [props.gameNum]);
+
+    useEffect(() => {
+        if (!board.length) return;
+        if (cellsToWin === 0) didWin(true);
+    }, [cellsToWin])
+
+    const init = () => {
+        let [mainBoard, numCells] = createStartingBoard()
+        let newRenderedBoard = renderBoard(mainBoard);
+        setCellsToWin(numCells);
+        setBoard(mainBoard)
+        setRenderedBoard(newRenderedBoard)
+    }
 
     const createStartingBoard = () => {
         let mainBoard = [];
+        let numCells = 0;
         // This is where we should start doing the random mines cells
         for (let i = 0; i < 10; i++) {
             let row = [];
             for (let j = 0; j < 10; j++) {
                 const random = Math.random();
                 if (random < 0.2) row.push("x");
-                else row.push("o");
+                else {
+                    numCells++
+                    row.push("o")
+                };
             }
             mainBoard.push(row);
         }
-        renderBoard(mainBoard);
+        return [mainBoard, numCells]
     };
     // I think that this is not running once the game ends
-    const renderBoard = (board) => {
-        let returnBoard = [];
+    const renderBoard = (boardArr) => {
+        let newRenderedBoard = [];
         // Odds 0.1 that its a mine
         // 0.7 that its a number
         // 0.2 that its nothing
-        for (let rowNum = 0; rowNum < board.length; rowNum++) {
+        for (let rowNum = 0; rowNum < boardArr.length; rowNum++) {
             let row = [];
-            for (let colNum = 0; colNum < board[rowNum].length; colNum++) {
+            for (let colNum = 0; colNum < boardArr[rowNum].length; colNum++) {
                 let cell = (
                     <Cell
                         key={`${rowNum}${colNum}`}
                         y={rowNum}
                         x={colNum}
-                        board={board}
-                        endGame={endGame}
-                        checkWin={checkWin}
-                        setBoard={setBoard}
+                        board={boardArr}
+                        didWin={didWin}
+                        setCellsToWin={setCellsToWin}
                         gameNum={props.gameNum}
-                        type={board[rowNum][colNum]}
+                        type={boardArr[rowNum][colNum]}
                     />
                 );
                 row.push(cell);
             }
-
-            returnBoard.push(
+            newRenderedBoard.push(
                 <div className={styles.row} key={rowNum}>
                     {row}
                 </div>
             );
         }
-        setBoard(board);
-        setRenderedBoard(returnBoard);
+        return newRenderedBoard
     };
 
-    const endGame = (didWin) => {
-        if (didWin) {
+    const didWin = (didWinBool) => {
+        if (didWinBool) {
             props.setGamesWon((prevState) => prevState + 1);
             props.setGameStatus(2);
         } else {
@@ -68,18 +84,11 @@ const Board = (props) => {
         }
     };
 
-    const checkWin = (checkBoard) => {
-        // Check here if won
-        for (let row = 0; row < checkBoard.length; row++) {
-            for (let col = 0; col < checkBoard[0].length; col++) {
-                let cellToCheck = checkBoard[row][col];
-                if (cellToCheck === "o") return false;
-            }
-        }
-        return true;
-    };
-
-    return <div style={props.gameStatus === 0 ? {} : { pointerEvents: 'none' }} id={styles.board}>{renderedBoard}</div>;
+    return <div
+        style={{ pointerEvents: props.gameStatus === 0 ? 'all' : 'none' }}
+        id={styles.board}>
+        {renderedBoard}
+    </div>
 };
 
 export default Board

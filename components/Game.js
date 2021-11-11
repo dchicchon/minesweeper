@@ -10,9 +10,6 @@ const Game = (props) => {
     let [gameNum, setGameNum] = useState(0); // anytime game num change, rerender the dashboard for timer sake
     let [gameStatus, setGameStatus] = useState(0); // 0 is active, 1 is game lost, 2 is game won
 
-    useEffect(() => {
-        console.log("Run this when the game changes");
-    }, [gameStatus]);
     return (
         <div id={styles.main_game}>
             <h1 className={styles.title}>Minesweeper</h1>
