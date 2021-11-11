@@ -7,15 +7,13 @@
     width: 50%;
     padding-top: 25px;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 #dashboard {
     color: gold;
-}
-
-#board {
-    margin: 0 auto;
-    width: fit-content;
 }
 
 .row {
@@ -47,13 +45,19 @@
     padding: 1rem;
 }
 
-@media (max-width: 600px) {
-    #main-game {
-        margin: 0;
-        width: 100%;
-    }
+@media (max-width: 768px) {
     .cell {
-        padding: 0.6rem;
+        padding: 0.75rem;
+        height: 1.25rem;
+        width: 1.25rem;
+        font-size: 14px;
+    }
+}
+
+
+@media (max-width: 420px) {
+    .cell {
+        padding: 0.5rem;
         height: 1rem;
         width: 1rem;
         font-size: 14px;
