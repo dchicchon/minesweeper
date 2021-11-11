@@ -4,8 +4,7 @@
 }
 
 #main_game {
-    width: 50%;
-    padding-top: 25px;
+    width: 75%;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -13,6 +12,8 @@
 }
 
 #dashboard {
+    display: flex;
+    gap: 25px;
     color: gold;
 }
 
