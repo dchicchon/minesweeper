@@ -3,7 +3,7 @@ import Board from './Board'
 import Dashboard from './Dashboard'
 import GameOverModal from './GameOverModal'
 import styles from '../styles/game.module.css'
-import CompleteScene from "./Cube";
+import Scene from "./Scene";
 
 const Game = (props) => {
     let [gamesWon, setGamesWon] = useState(0);
@@ -20,7 +20,7 @@ const Game = (props) => {
                 gamesLost={gamesLost}
                 gameNum={gameNum}
             />
-            <CompleteScene />
+            <Scene />
             {/* <Board
                 setInPlay={props.setInPlay}
                 gamesWon={gamesWon}
