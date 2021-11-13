@@ -113,7 +113,8 @@ const Cube = (props) => {
                 rowPos = 2;
                 sidePos = 1;
                 // Rotation about the xAxis
-                rotation[0] = side === 1 ? /*Top 270*/ -Math.PI / 2 : /* Bottom 90 */ Math.PI / 2
+                rotation[0] = Math.PI /2
+                // rotation[0] = side === 1 ? /*Top 270*/ -Math.PI / 2 : /* Bottom 90 */ Math.PI / 2
             }
 
             // Back
