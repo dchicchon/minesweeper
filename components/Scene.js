@@ -61,55 +61,76 @@ const Cell = (props) => {
     console.log(side, y, x);
     let size = props.cubeArr[0].length;
     // Assume we're looking for cells in this face for now
+
+    // Check edges
+    if (y - 1 < 0) {
+      // check top
+      let checkSide = map[side][0] // top
+      // we know its the last row
+      let sideArr = props.cubeArr[checkSide][size - 1] // 1D array
+      console.log(sideArr)
+      if (x > 0) {
+        // get top left
+        let topLeftCell = sideArr[x - 1]
+        if (topLeftCell === 'x') mineNum++
+      }
+      if (x < size - 1) {
+        let topRightCell = sideArr[x + 1]
+        if (topRightCell === 'x') mineNum++
+        // get top right
+      }
+
+      // get center
+      let topCenterCell = sideArr[x]
+      if (topCenterCell === 'x') mineNum++
+
+    }
+    if (y + 1 === size) {
+      // check bottom
+      let checkSide = map[side][2]; // bottom
+      // we know its the top row
+      let sideArr = props.cubeArr[checkSide][0] // 1D array
+      console.log(sideArr)
+      if (x > 0) {
+        let bottomLeftCell = sideArr[x - 1]
+        if (bottomLeftCell === 'x') mineNum++
+      }
+
+      if (x < size - 1) {
+        let bottomRightCell = sideArr[x + 1]
+        if (bottomRightCell === 'x') mineNum++
+      }
+
+      let bottomCenterCell = sideArr[x]
+      if (bottomCenterCell === 'x') mineNum++
+    }
+    if (x - 1 < 0) {
+      // check left
+      let checkSide = map[side][3]
+      
+    }
+    if (x + 1 === size) {
+      // check right
+      let checkSide = map[side][1];
+    }
+
+
+    // Check surrounding cells on main face
     for (let row = -1; row <= 1; row++) {
       for (let col = -1; col <= 1; col++) {
         let cellY = y + row;
         let cellX = x + col;
-
-        // Diagonals check pass
-        if (cellY < 0 && cellX < 0) continue;
-        if (cellY < 0 && cellX >= size) continue;
-        if (cellY >= size && cellX < 0) continue;
-        if (cellY >= size && cellX >= size) continue;
-
-        // map array goes [top,right,bottom,left]
-        // bottom or top;
-        if (cellY < 0 || cellY >= size) {
-          console.log("Cell Out of bounds");
-          console.log(side, cellY, cellX);
-          console.log(map);
-          let checkSide = cellY < 0 ? map[side][0] : map[side][2];
-          
-          // refer to map here
-          // so, based on our current coordinates, we should know
-          // what coordinates to look at
-
-          continue;
-        }
-        // left or right;
-        if (cellX < 0 || cellX >= size) {
-          console.log("Cell Out of bounds");
-          console.log(side, cellY, cellX);
-          console.log(map);
-
-          // refer to map here
-          continue;
-        }
-
-        if (row === 0 && col === 0) continue;
-
-        // check the cubeArr
+        if (cellY < 0 || cellY >= size) continue       // dont check out of bounds top and bottom
+        if (cellX < 0 || cellX >= size) continue       // dont check out of bounds right and left
+        if (row === 0 && col === 0) continue;          /// dont check same cell
         let surroundingCellType = props.cubeArr[side][cellY][cellX];
-        console.log("Surrounding Cell");
-        console.log(side, cellY, cellX);
-        console.log(surroundingCellType);
+        // console.log("Surrounding Cell");
+        // console.log(side, cellY, cellX);
+        // console.log(surroundingCellType);
         if (surroundingCellType === "x") mineNum++;
-
-        // check these in the array?
-
-        // if out of bounds, check map
       }
     }
+
     console.log("Mine Num");
     console.log(mineNum);
     if (mineNum === 0) {
@@ -165,6 +186,7 @@ const Cell = (props) => {
         depthOffset={-1}
       >
         {/* {props.text} */}
+        {/* {mainText} */}
         {mainText ? mainText : props.type}
       </Text>
       <meshPhongMaterial color={colorStyle()} />
