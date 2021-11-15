@@ -253,7 +253,7 @@ const Scene = () => {
         <OrbitControls minDistance={1} maxDistance={8} />
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 15, 10]} angle={0.3} />
-        <Cube size={3} position={[0, 0, 0]} />
+        <Cube size={5} position={[0, 0, 0]} />
         <Box position={[0, 0, 0]} />
       </Canvas>
     </div>
