@@ -4,6 +4,19 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import styles from "../styles/game.module.css";
 import { DoubleSide, Vector3 } from "three";
 
+// map for checking the out of bounds items
+const map = {
+  // top, right, bottom, left
+
+  0: [4, 1, 5, 3],
+  1: [4, 2, 5, 1],
+  2: [4, 3, 5, 1],
+  3: [4, 0, 5, 2],
+
+  4: [2, 1, 0, 3],
+  5: [0, 1, 2, 3],
+};
+
 // 3d matrix
 // https://www.haroldserrano.com/blog/2014/12/27/introduction-to-3d-mathematics
 
@@ -20,24 +33,69 @@ const Cell = (props) => {
   const [flag, setFlag] = useState(false);
   const [mainText, setMainText] = useState("");
 
+  // run this anytime there is a new game
   useEffect(() => {
     setChecked(false);
     setFlag(false);
     setMainText("");
   }, [props.gameNum]);
 
+  // run this if we check this
   useEffect(() => {
-    if (flag) setMainText("F");
-    else if (checked) setMainText(props.type);
+    if (flag) setMainText("?");
     else setMainText("");
-  }, [flag, checked]);
+  }, [flag]);
 
   useCursor(hovered);
 
-  const checkMines = () => {};
+  // look for mines surrounding the current cell and
+  // label the number of mines for mainText
+  const checkMines = () => {
+    let mineNum = 0;
+    let validCells = [];
+    let [side, y, x] = props.coordinate;
+
+    // retrieve all of the surrounding cells on this face
+    // at first
+    console.log(map);
+    console.log("This Cell");
+    console.log(side, y, x);
+    console.log(props.cubeArr);
+    // Assume we're looking for cells in this face for now
+    for (let row = -1; row <= 1; row++) {
+      for (let col = -1; col <= 1; col++) {
+        let cellY = y + row;
+        let cellX = x + col;
+        // bottom or top;
+        if (cellY < 0 || cellY >= props.size) {
+          // refer to map here
+          continue;
+        }
+        // left or right;
+        if (cellX < 0 || cellX >= props.size) {
+          // refer to map here
+          continue;
+        }
+        if (row === 0 && col === 0) continue;
+
+        // check the cubeArr
+        let surroundingCellType = props.cubeArr[side][cellY][cellX];
+        console.log("Surrounding Cell");
+        console.log(side, cellY, cellX);
+        console.log(surroundingCellType);
+        if (surroundingCellType === "x") mineNum++;
+
+        // check these in the array?
+
+        // if out of bounds, check map
+      }
+    }
+    setMainText(mineNum);
+  };
 
   const colorStyle = () => {
     if (hovered) return "hotpink";
+    if (checked && props.type === "x") return "red";
     if (checked) return "lightblue";
     return "orange";
   };
@@ -55,6 +113,7 @@ const Cell = (props) => {
         } else {
           // end the game
           setChecked(true);
+          setMainText("x");
           props.setGameStatus(1);
         }
       }}
@@ -73,16 +132,16 @@ const Cell = (props) => {
       position={props.position}
     >
       <Text
-        fontSize={0.5}
+        fontSize={0.2}
         color="black"
         anchorX="center"
         anchorY="middle"
         depthOffset={-1}
       >
-        {mainText}
-        {/* {props.text} */}
+        {props.text}
+        {/* {mainText ? mainText : props.type} */}
       </Text>
-      <meshPhongMaterial side={DoubleSide} color={colorStyle()} />
+      <meshPhongMaterial color={colorStyle()} />
     </Plane>
   );
 };
@@ -93,21 +152,29 @@ const Face = (props) => {
   useEffect(() => {
     let face = createFace();
     setRenderedFace(face);
-  }, []);
+  }, [props.gameNum]);
 
   const createFace = () => {
     let face = [];
-    for (let row = 0; row < props.arr.length; row++) {
+    let size = props.cubeArr[0].length;
+    console.log(props.cubeArr);
+    for (let row = 0; row < size; row++) {
       let rowArr = [];
-      for (let col = 0; col < props.arr.length; col++) {
-        let position = [col - 1, row - 1, 0];
+      for (let col = 0; col < size; col++) {
+        // let position = [col - 1, row - 1, 0];
+        let position = [col - 1, size - 2-  row, 0];
+        // let position = [size - 2 - col, size - 2 - row, 0];
+
         rowArr[col] = (
           <Cell
             key={`${props.side}-${row}-${col}`}
+            id={`${props.side}-${row}-${col}`}
+            coordinate={[props.side, row, col]}
             setGameStatus={props.setGameStatus}
             gameNum={props.gameNum}
-            type={props.arr[row][col]}
-            text={props.arr[row][col]}
+            cubeArr={props.cubeArr}
+            type={props.cubeArr[props.side][row][col]}
+            text={`${props.side}-${row}-${col}`}
             position={position}
           />
         );
@@ -133,20 +200,8 @@ const Cube = (props) => {
   const [cubeArr, setCubeArr] = useState([]);
   const [renderCubeArr, setRenderCubeArr] = useState([]);
 
-  // map for checking the out of bounds items
-  const map = {
-    // top, right, bottom, left
-
-    0: [4, 1, 5, 3],
-    1: [4, 2, 5, 1],
-    2: [4, 3, 5, 1],
-    3: [4, 0, 5, 2],
-
-    4: [2, 1, 0, 3],
-    5: [0, 1, 2, 3],
-  };
-
   useEffect(() => {
+    console.log("new game:", props.gameNum);
     init();
   }, [props.gameNum]);
 
@@ -201,17 +256,17 @@ const Cube = (props) => {
         case 0:
           cube[side] = (
             <Face
-              gameNum={props.gameNum}
-              setGameStatus={props.setGameStatus}
               key={side}
+              side={side}
+              gameNum={props.gameNum}
+              cubeArr={arr}
+              setGameStatus={props.setGameStatus}
               rotation={[0, 0, 0]}
               position={[
                 -getScalingFactor(),
                 -getScalingFactor(),
                 getScalingFactor() + 1.5,
               ]}
-              side={side}
-              arr={arr[side]}
             />
           );
           break;
@@ -220,17 +275,17 @@ const Cube = (props) => {
         case 1:
           cube[side] = (
             <Face
+              key={side}
+              side={side}
+              cubeArr={arr}
               gameNum={props.gameNum}
               setGameStatus={props.setGameStatus}
-              key={side}
               rotation={[0, Math.PI / 2, 0]}
               position={[
                 getScalingFactor() + 1.5,
                 -getScalingFactor(),
                 getScalingFactor(),
               ]}
-              side={side}
-              arr={arr[side]}
             />
           );
           break;
@@ -239,6 +294,7 @@ const Cube = (props) => {
           cube[side] = (
             <Face
               gameNum={props.gameNum}
+              cubeArr={arr}
               setGameStatus={props.setGameStatus}
               key={side}
               rotation={[0, Math.PI, 0]}
@@ -248,7 +304,6 @@ const Cube = (props) => {
                 -(getScalingFactor() + 1.5),
               ]}
               side={side}
-              arr={arr[side]}
             />
           );
           break;
@@ -256,9 +311,10 @@ const Cube = (props) => {
         case 3:
           cube[side] = (
             <Face
-              gameNum={props.gameNum}
-              setGameStatus={props.setGameStatus}
               key={side}
+              gameNum={props.gameNum}
+              cubeArr={arr}
+              setGameStatus={props.setGameStatus}
               rotation={[0, -Math.PI / 2, 0]}
               position={[
                 -(getScalingFactor() + 1.5),
@@ -266,7 +322,6 @@ const Cube = (props) => {
                 -getScalingFactor(),
               ]}
               side={side}
-              arr={arr[side]}
             />
           );
           break;
@@ -275,6 +330,7 @@ const Cube = (props) => {
           cube[side] = (
             <Face
               gameNum={props.gameNum}
+              cubeArr={arr}
               setGameStatus={props.setGameStatus}
               key={side}
               rotation={[-Math.PI / 2, 0, 0]}
@@ -284,7 +340,6 @@ const Cube = (props) => {
                 getScalingFactor(),
               ]}
               side={side}
-              arr={arr[side]}
             />
           );
           break;
@@ -293,6 +348,7 @@ const Cube = (props) => {
           cube[side] = (
             <Face
               gameNum={props.gameNum}
+              cubeArr={arr}
               setGameStatus={props.setGameStatus}
               key={side}
               rotation={[Math.PI / 2, 0, 0]}
@@ -302,7 +358,6 @@ const Cube = (props) => {
                 -getScalingFactor(),
               ]}
               side={side}
-              arr={arr[side]}
             />
           );
           break;
@@ -319,7 +374,7 @@ const Scene = (props) => {
   return (
     <div id={styles.scene}>
       <Canvas>
-        <OrbitControls minDistance={5} maxDistance={7} />
+        <OrbitControls minDistance={5} maxDistance={9} />
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 15, 10]} angle={0.3} />
         <Cube
