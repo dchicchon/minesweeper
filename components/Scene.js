@@ -60,22 +60,28 @@ const Cell = (props) => {
     console.log(map);
     console.log("This Cell");
     console.log(side, y, x);
-    console.log(props.cubeArr);
+    let size = props.cubeArr[0].length;
+    console.log(size);
     // Assume we're looking for cells in this face for now
     for (let row = -1; row <= 1; row++) {
       for (let col = -1; col <= 1; col++) {
         let cellY = y + row;
         let cellX = x + col;
         // bottom or top;
-        if (cellY < 0 || cellY >= props.size) {
+        if (cellY < 0 || cellY >= size) {
+          console.log("Cell Out of bounds");
+          console.log(side, cellY, cellX);
           // refer to map here
           continue;
         }
         // left or right;
-        if (cellX < 0 || cellX >= props.size) {
+        if (cellX < 0 || cellX >= size) {
+          console.log("Cell Out of bounds");
+          console.log(side, cellY, cellX);
           // refer to map here
           continue;
         }
+
         if (row === 0 && col === 0) continue;
 
         // check the cubeArr
@@ -90,7 +96,13 @@ const Cell = (props) => {
         // if out of bounds, check map
       }
     }
-    setMainText(mineNum);
+    console.log("Mine Num");
+    console.log(mineNum);
+    if (mineNum === 0) {
+      setMainText("-");
+    } else {
+      setMainText(mineNum);
+    }
   };
 
   const colorStyle = () => {
@@ -138,8 +150,8 @@ const Cell = (props) => {
         anchorY="middle"
         depthOffset={-1}
       >
-        {props.text}
-        {/* {mainText ? mainText : props.type} */}
+        {/* {props.text} */}
+        {mainText ? mainText : props.type}
       </Text>
       <meshPhongMaterial color={colorStyle()} />
     </Plane>
@@ -157,12 +169,12 @@ const Face = (props) => {
   const createFace = () => {
     let face = [];
     let size = props.cubeArr[0].length;
-    console.log(props.cubeArr);
+    // console.log(props.cubeArr);
     for (let row = 0; row < size; row++) {
       let rowArr = [];
       for (let col = 0; col < size; col++) {
         // let position = [col - 1, row - 1, 0];
-        let position = [col - 1, size - 2-  row, 0];
+        let position = [col - 1, size - 2 - row, 0];
         // let position = [size - 2 - col, size - 2 - row, 0];
 
         rowArr[col] = (
