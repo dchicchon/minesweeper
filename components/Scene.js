@@ -17,20 +17,50 @@ import { DoubleSide, Vector3 } from "three";
 const Cell = (props) => {
   const [hovered, hover] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [flag, setFlag] = useState(false);
+  const [mainText, setMainText] = useState("");
+
+  useEffect(() => {
+    setChecked(false);
+    setFlag(false);
+    setMainText("");
+  }, [props.gameNum]);
+
+  useEffect(() => {
+    if (flag) setMainText("F");
+    else if (checked) setMainText(props.type);
+    else setMainText("");
+  }, [flag, checked]);
 
   useCursor(hovered);
+
+  const checkMines = () => {};
 
   const colorStyle = () => {
     if (hovered) return "hotpink";
     if (checked) return "lightblue";
     return "orange";
   };
+
   return (
     <Plane
       scale={1}
       onClick={(e) => {
         e.stopPropagation();
-        setChecked(!checked);
+        if (checked) return;
+        if (props.type === "o") {
+          // check for mines nearby
+          setChecked(true);
+          checkMines();
+        } else {
+          // end the game
+          setChecked(true);
+          props.setGameStatus(1);
+        }
+      }}
+      onContextMenu={(e) => {
+        e.stopPropagation();
+        setFlag(!flag);
       }}
       onPointerEnter={(e) => {
         e.stopPropagation();
@@ -42,8 +72,15 @@ const Cell = (props) => {
       }}
       position={props.position}
     >
-      <Text color="black" anchorX="center" anchorY="middle" depthOffset={-1}>
-        {props.text}
+      <Text
+        fontSize={0.5}
+        color="black"
+        anchorX="center"
+        anchorY="middle"
+        depthOffset={-1}
+      >
+        {mainText}
+        {/* {props.text} */}
       </Text>
       <meshPhongMaterial side={DoubleSide} color={colorStyle()} />
     </Plane>
@@ -51,12 +88,9 @@ const Cell = (props) => {
 };
 
 const Face = (props) => {
-  const groupRef = useRef();
   const [renderedFace, setRenderedFace] = useState([]);
 
-  // useEffect(() => {}, []);
-
-  useLayoutEffect(() => {
+  useEffect(() => {
     let face = createFace();
     setRenderedFace(face);
   }, []);
@@ -66,19 +100,19 @@ const Face = (props) => {
     for (let row = 0; row < props.arr.length; row++) {
       let rowArr = [];
       for (let col = 0; col < props.arr.length; col++) {
-        // press away from the center
-        // side = 0 front, away from center by z axis
-        // side = 1 right, away from center by x axis
-        // side = 2 back,  away from center by z axis
-        // side = 3 left,  away from center by x axis
-
         let position = [col - 1, row - 1, 0];
-        let cell = (
-          <Cell text={`${props.side}-${row}-${col}`} position={position} />
+        rowArr[col] = (
+          <Cell
+            key={`${props.side}-${row}-${col}`}
+            setGameStatus={props.setGameStatus}
+            gameNum={props.gameNum}
+            type={props.arr[row][col]}
+            text={props.arr[row][col]}
+            position={position}
+          />
         );
-        rowArr[col] = cell;
       }
-      face[row] = <group>{rowArr}</group>;
+      face[row] = <group key={`${props.side}-${row}`}>{rowArr}</group>;
     }
     return face;
   };
@@ -87,7 +121,7 @@ const Face = (props) => {
 
   // maybe we will position the face on the group rather than the cells!
   return (
-    <group rotation={props.rotation} position={props.position} ref={groupRef}>
+    <group rotation={props.rotation} position={props.position}>
       {renderedFace}
     </group>
   );
@@ -99,9 +133,22 @@ const Cube = (props) => {
   const [cubeArr, setCubeArr] = useState([]);
   const [renderCubeArr, setRenderCubeArr] = useState([]);
 
+  // map for checking the out of bounds items
+  const map = {
+    // top, right, bottom, left
+
+    0: [4, 1, 5, 3],
+    1: [4, 2, 5, 1],
+    2: [4, 3, 5, 1],
+    3: [4, 0, 5, 2],
+
+    4: [2, 1, 0, 3],
+    5: [0, 1, 2, 3],
+  };
+
   useEffect(() => {
     init();
-  }, []);
+  }, [props.gameNum]);
 
   // for now only take in odd values
   // maybe based on the size of our cube, we should change the groups position to
@@ -145,11 +192,18 @@ const Cube = (props) => {
     // front,right,back,left;
     // add box to figure out stuff
     for (let side = 0; side <= 5; side++) {
+      // do if statements here
+      // let rotation = [0, 0, 0];
+      // let position = [0, 0, 0];
+
       switch (side) {
         // Front
         case 0:
           cube[side] = (
             <Face
+              gameNum={props.gameNum}
+              setGameStatus={props.setGameStatus}
+              key={side}
               rotation={[0, 0, 0]}
               position={[
                 -getScalingFactor(),
@@ -166,6 +220,9 @@ const Cube = (props) => {
         case 1:
           cube[side] = (
             <Face
+              gameNum={props.gameNum}
+              setGameStatus={props.setGameStatus}
+              key={side}
               rotation={[0, Math.PI / 2, 0]}
               position={[
                 getScalingFactor() + 1.5,
@@ -181,6 +238,9 @@ const Cube = (props) => {
         case 2:
           cube[side] = (
             <Face
+              gameNum={props.gameNum}
+              setGameStatus={props.setGameStatus}
+              key={side}
               rotation={[0, Math.PI, 0]}
               position={[
                 getScalingFactor(),
@@ -196,6 +256,9 @@ const Cube = (props) => {
         case 3:
           cube[side] = (
             <Face
+              gameNum={props.gameNum}
+              setGameStatus={props.setGameStatus}
+              key={side}
               rotation={[0, -Math.PI / 2, 0]}
               position={[
                 -(getScalingFactor() + 1.5),
@@ -211,6 +274,9 @@ const Cube = (props) => {
         case 4:
           cube[side] = (
             <Face
+              gameNum={props.gameNum}
+              setGameStatus={props.setGameStatus}
+              key={side}
               rotation={[-Math.PI / 2, 0, 0]}
               position={[
                 -getScalingFactor(),
@@ -226,6 +292,9 @@ const Cube = (props) => {
         case 5:
           cube[side] = (
             <Face
+              gameNum={props.gameNum}
+              setGameStatus={props.setGameStatus}
+              key={side}
               rotation={[Math.PI / 2, 0, 0]}
               position={[
                 -getScalingFactor(),
@@ -246,15 +315,20 @@ const Cube = (props) => {
   return <group>{renderCubeArr}</group>;
 };
 
-const Scene = () => {
+const Scene = (props) => {
   return (
     <div id={styles.scene}>
       <Canvas>
-        <OrbitControls minDistance={1} maxDistance={8} />
+        <OrbitControls minDistance={5} maxDistance={7} />
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 15, 10]} angle={0.3} />
-        <Cube size={5} position={[0, 0, 0]} />
-        <Box position={[0, 0, 0]} />
+        <Cube
+          gameNum={props.gameNum}
+          setGameStatus={props.setGameStatus}
+          size={5}
+          position={[0, 0, 0]}
+        />
+        {/* <Box position={[0, 0, 0]} /> */}
       </Canvas>
     </div>
   );
