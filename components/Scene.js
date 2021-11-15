@@ -57,27 +57,41 @@ const Cell = (props) => {
 
     // retrieve all of the surrounding cells on this face
     // at first
-    console.log(map);
     console.log("This Cell");
     console.log(side, y, x);
     let size = props.cubeArr[0].length;
-    console.log(size);
     // Assume we're looking for cells in this face for now
     for (let row = -1; row <= 1; row++) {
       for (let col = -1; col <= 1; col++) {
         let cellY = y + row;
         let cellX = x + col;
+
+        // Diagonals check pass
+        if (cellY < 0 && cellX < 0) continue;
+        if (cellY < 0 && cellX >= size) continue;
+        if (cellY >= size && cellX < 0) continue;
+        if (cellY >= size && cellX >= size) continue;
+
+        // map array goes [top,right,bottom,left]
         // bottom or top;
         if (cellY < 0 || cellY >= size) {
           console.log("Cell Out of bounds");
           console.log(side, cellY, cellX);
+          console.log(map);
+          let checkSide = cellY < 0 ? map[side][0] : map[side][2];
+          
           // refer to map here
+          // so, based on our current coordinates, we should know
+          // what coordinates to look at
+
           continue;
         }
         // left or right;
         if (cellX < 0 || cellX >= size) {
           console.log("Cell Out of bounds");
           console.log(side, cellY, cellX);
+          console.log(map);
+
           // refer to map here
           continue;
         }
