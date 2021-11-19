@@ -36,32 +36,3 @@ export const evilRotate = (targetArr, numTurns) => {
     }
     return inputArr
 }
-
-export const getOriginalPosition = (originalArr, newArr, x, y) => {
-    let newY, newX;
-
-    /**
-        * originalArr
-        * [
-        *   [1,2,3],
-        *   [1,2,3],
-        *   [1,2,3],
-        * ]
-        * newArr
-        * [
-        *   [1,1,1],
-        *   [2,2,2],
-        *   [3,3,3],
-        * ]
-        * 
-        * Maybe pass in number of clock-wise rotations
-        * like rotation = 1 
-        * 
-        * 
-        * 
-    */
-
-
-
-    return [newY, newX]
-}
