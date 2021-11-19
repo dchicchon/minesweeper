@@ -315,8 +315,7 @@ const Cell = (props) => {
         depthOffset={-1}
       >
         {/* {props.text} */}
-        {/* {mainText} */}
-        {mainText ? mainText : props.type}
+        {mainText}
       </Text>
       <meshPhongMaterial color={colorStyle()} />
     </Plane>
