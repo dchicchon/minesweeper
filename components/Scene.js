@@ -1,18 +1,17 @@
-import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
-import { OrbitControls, Plane, useCursor, Text, Box } from "@react-three/drei";
+import React, { useEffect, useRef, useState } from "react";
+import { OrbitControls, Plane, useCursor, Text } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import styles from "../styles/game.module.css";
+import { evilRotate, getOriginalPosition } from "../helpers/helper";
 import { DoubleSide, Vector3 } from "three";
 
 // map for checking the out of bounds items
 const map = {
   // top, right, bottom, left
-
   0: [4, 1, 5, 3],
   1: [4, 2, 5, 1],
   2: [4, 3, 5, 1],
   3: [4, 0, 5, 2],
-
   4: [2, 1, 0, 3],
   5: [0, 1, 2, 3],
 };
@@ -24,10 +23,11 @@ const map = {
 // https://www.ilyameerovich.com/simple-3d-text-meshes-in-three-js/
 // https://codesandbox.io/s/sparks-and-effects-sbf2i?from-embed=&file=/src/Text.js
 
-// {/* Using Text */ }
+// /* Using Text */ 
 // {/* https://github.com/protectwise/troika/blob/a2be90a573d69827a9d5abe47a4c53d083647239/packages/troika-three-text/src/Text.js#L91 */ }
 
 const Cell = (props) => {
+  const cellRef = useRef(null);
   const [hovered, hover] = useState(false);
   const [checked, setChecked] = useState(false);
   const [flag, setFlag] = useState(false);
@@ -50,70 +50,198 @@ const Cell = (props) => {
 
   // look for mines surrounding the current cell and
   // label the number of mines for mainText
-  const checkMines = () => {
+  const checkMines = (event) => {
+    event.stopPropagation();
+    if (checked || flag) return;
+    if (props.type === 'x') {
+      setMainText("x");
+      setChecked(true);
+      props.didWin(false)
+      return
+    }
+
+
+    setChecked(true);
     let mineNum = 0;
     let validCells = [];
     let [side, y, x] = props.coordinate;
 
-    // retrieve all of the surrounding cells on this face
-    // at first
-    console.log("This Cell");
-    console.log(side, y, x);
     let size = props.cubeArr[0].length;
-    // Assume we're looking for cells in this face for now
+    let threeCube = cellRef.current.parent.parent.parent
+    let face = threeCube.children[side].children.map(group => {
+      let row = group.children.map(col => {
+        return col.userData
+      })
+      return row
+    })
 
+    // Assume we're looking for cells in this face for now
+    // ===========================
     // Check edges
+    // ===========================
+
+    // Check top
     if (y - 1 < 0) {
       // check top
       let checkSide = map[side][0] // top
-      // we know its the last row
-      let sideArr = props.cubeArr[checkSide][size - 1] // 1D array
-      console.log(sideArr)
+      // we rotate the top and bottom array to compensate for our cube structure
+      let sideArr = [] // Copy 2D array
+      let threeFace = threeCube.children[checkSide]
+      let threeRows = threeFace.children;
+
+      let threeFaceArray = threeRows.map(group => {
+        // what to return 
+        let row = group.children.map(col => {
+          // return an array of userData here
+          return col.userData
+        });
+
+        return row;
+      })
+
+      if (side === 4) sideArr = evilRotate(threeFaceArray, 2)
+      else if (side === 5) sideArr = evilRotate(threeFaceArray, 0)
+      else sideArr = evilRotate(threeFaceArray, side)
+      // If not at the top left corner
       if (x > 0) {
         // get top left
-        let topLeftCell = sideArr[x - 1]
-        if (topLeftCell === 'x') mineNum++
+        let topLeftCell = sideArr[size - 1][x - 1]
+        if (topLeftCell.type === 'x') mineNum++
+        if (!mineNum) validCells.push(topLeftCell.coordinate)
+
       }
+      // if not at the top right corner
       if (x < size - 1) {
-        let topRightCell = sideArr[x + 1]
-        if (topRightCell === 'x') mineNum++
+        let topRightCell = sideArr[size - 1][x + 1]
+        if (topRightCell.type === 'x') mineNum++
+        if (!mineNum) validCells.push(topRightCell.coordinate)
         // get top right
       }
-
       // get center
-      let topCenterCell = sideArr[x]
-      if (topCenterCell === 'x') mineNum++
+      let topCenterCell = sideArr[size - 1][x]
+      if (topCenterCell.type === 'x') mineNum++
+      if (!mineNum) validCells.push(topCenterCell.coordinate)
 
     }
+    // check bottom
     if (y + 1 === size) {
-      // check bottom
       let checkSide = map[side][2]; // bottom
+      let threeFace = threeCube.children[checkSide]
+      let threeRows = threeFace.children;
+
+      let threeFaceArray = threeRows.map(group => {
+        // what to return 
+        let row = group.children.map(col => {
+          // return an array of userData here
+          return col.userData
+        });
+
+        return row;
+      })
+
+
       // we know its the top row
-      let sideArr = props.cubeArr[checkSide][0] // 1D array
-      console.log(sideArr)
+      let sideArr = []
+      if (side === 4) sideArr = evilRotate(threeFaceArray, 0)
+      else if (side === 5) sideArr = evilRotate(threeFaceArray, 2)
+      else if (side !== 0) sideArr = evilRotate(threeFaceArray, 4 - side)
+      else sideArr = evilRotate(threeFaceArray, 0)
+
       if (x > 0) {
-        let bottomLeftCell = sideArr[x - 1]
-        if (bottomLeftCell === 'x') mineNum++
+        let bottomLeftCell = sideArr[0][x - 1]
+        console.log(bottomLeftCell)
+        if (bottomLeftCell.type === 'x') mineNum++
+        if (!mineNum) validCells.push(bottomLeftCell.coordinate)
       }
 
       if (x < size - 1) {
-        let bottomRightCell = sideArr[x + 1]
-        if (bottomRightCell === 'x') mineNum++
+        let bottomRightCell = sideArr[0][x + 1]
+        if (bottomRightCell.type === 'x') mineNum++
+        if (!mineNum) validCells.push(bottomRightCell.coordinate)
       }
 
-      let bottomCenterCell = sideArr[x]
-      if (bottomCenterCell === 'x') mineNum++
-    }
-    if (x - 1 < 0) {
-      // check left
-      let checkSide = map[side][3]
-      
-    }
-    if (x + 1 === size) {
-      // check right
-      let checkSide = map[side][1];
+      let bottomCenterCell = sideArr[0][x]
+      if (bottomCenterCell.type === 'x') mineNum++
+      if (!mineNum) validCells.push(bottomCenterCell.coordinate)
     }
 
+    // check left
+    if (x - 1 < 0) {
+      let checkSide = map[side][3]
+      let sideArr = []
+
+      let threeFace = threeCube.children[checkSide]
+      let threeRows = threeFace.children;
+
+      let threeFaceArray = threeRows.map(group => {
+        // what to return 
+        let row = group.children.map(col => {
+          // return an array of userData here
+          return col.userData
+        });
+
+        return row;
+      })
+
+      if (side === 4) sideArr = evilRotate(threeFaceArray, 1) // top
+      else if (side === 5) sideArr = evilRotate(threeFaceArray, 3) // bottom
+      else sideArr = evilRotate(threeFaceArray, 0)
+      if (y > 0) {
+        // leftTop
+        let leftTopCell = sideArr[y - 1][size - 1]
+        if (leftTopCell.type === 'x') mineNum++
+        if (!mineNum) validCells.push(leftTopCell.coordinate)
+      }
+      if (y < size - 1) {
+        let leftBottomCell = sideArr[y + 1][size - 1]
+        if (leftBottomCell.type === 'x') mineNum++
+        if (!mineNum) validCells.push(leftBottomCell.coordinate)
+
+      }
+
+      let leftCenterCell = sideArr[y][size - 1]
+      if (leftCenterCell.type === 'x') mineNum++
+      if (!mineNum) validCells.push(leftCenterCell.coordinate)
+    }
+    // check right
+    if (x + 1 === size) {
+      let checkSide = map[side][1];
+      let sideArr = []
+
+      let threeFace = threeCube.children[checkSide]
+      let threeRows = threeFace.children;
+
+      let threeFaceArray = threeRows.map(group => {
+        // what to return 
+        let row = group.children.map(col => {
+          // return an array of userData here
+          return col.userData
+        });
+
+        return row;
+      })
+
+
+      if (side === 4) sideArr = evilRotate(threeFaceArray, 3)
+      if (side === 5) sideArr = evilRotate(threeFaceArray, 1)
+      else sideArr = evilRotate(threeFaceArray, 0)
+      if (y > 0) {
+        let rightTopCell = sideArr[y - 1][0]
+        if (rightTopCell.type === 'x') mineNum++
+        if (!mineNum) validCells.push(rightTopCell.coordinate)
+      }
+
+      if (y < size - 1) {
+        let rightBottomCell = sideArr[y + 1][0]
+        if (rightBottomCell.type === 'x') mineNum++
+        if (!mineNum) validCells.push(rightBottomCell.coordinate)
+      }
+
+      let rightCenterCell = sideArr[y][0]
+      if (rightCenterCell.type === 'x') mineNum++
+      if (!mineNum) validCells.push(rightCenterCell.coordinate)
+    }
+    // ===========================
 
     // Check surrounding cells on main face
     for (let row = -1; row <= 1; row++) {
@@ -123,22 +251,34 @@ const Cell = (props) => {
         if (cellY < 0 || cellY >= size) continue       // dont check out of bounds top and bottom
         if (cellX < 0 || cellX >= size) continue       // dont check out of bounds right and left
         if (row === 0 && col === 0) continue;          /// dont check same cell
-        let surroundingCellType = props.cubeArr[side][cellY][cellX];
-        // console.log("Surrounding Cell");
-        // console.log(side, cellY, cellX);
-        // console.log(surroundingCellType);
-        if (surroundingCellType === "x") mineNum++;
+        let surroundingCell = face[cellY][cellX];
+        if (surroundingCell.type === "x") mineNum++;
+        else if (!mineNum) validCells.push(surroundingCell.coordinate)
       }
     }
-
-    console.log("Mine Num");
-    console.log(mineNum);
     if (mineNum === 0) {
       setMainText("-");
+      clickSurroundingCells(event, validCells)
     } else {
       setMainText(mineNum);
     }
+    props.setCellsToWin(prevState => {
+      console.log("Current Cells to get:", prevState)
+      return prevState - 1
+    })
   };
+
+  const clickSurroundingCells = (event, cellsToCheck) => {
+    // click on all of the cells nearby
+    let cubeObject = cellRef.current.parent.parent.parent
+
+    for (let elm = 0; elm < cellsToCheck.length; elm++) {
+      let [cellSide, cellY, cellX] = cellsToCheck[elm]
+      let cellToClick = cubeObject.children[cellSide].children[cellY].children[cellX] // clicking on the cell reference here
+      let time = Math.floor(Math.random() * 500) + 250;
+      setTimeout(() => cellToClick.__r3f.handlers.onClick(event), time);
+    }
+  }
 
   const colorStyle = () => {
     if (hovered) return "hotpink";
@@ -149,21 +289,10 @@ const Cell = (props) => {
 
   return (
     <Plane
+      ref={cellRef}
+      userData={{ coordinate: props.coordinate, type: props.type }}
       scale={1}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (checked) return;
-        if (props.type === "o") {
-          // check for mines nearby
-          setChecked(true);
-          checkMines();
-        } else {
-          // end the game
-          setChecked(true);
-          setMainText("x");
-          props.setGameStatus(1);
-        }
-      }}
+      onClick={checkMines}
       onContextMenu={(e) => {
         e.stopPropagation();
         setFlag(!flag);
@@ -209,25 +338,22 @@ const Face = (props) => {
     for (let row = 0; row < size; row++) {
       let rowArr = [];
       for (let col = 0; col < size; col++) {
-        // let position = [col - 1, row - 1, 0];
         let position = [col - 1, size - 2 - row, 0];
-        // let position = [size - 2 - col, size - 2 - row, 0];
-
         rowArr[col] = (
           <Cell
             key={`${props.side}-${row}-${col}`}
-            id={`${props.side}-${row}-${col}`}
+            name={`${props.side}-${row}-${col}`}
+            setCellsToWin={props.setCellsToWin}
             coordinate={[props.side, row, col]}
-            setGameStatus={props.setGameStatus}
             gameNum={props.gameNum}
+            didWin={props.didWin}
             cubeArr={props.cubeArr}
             type={props.cubeArr[props.side][row][col]}
-            text={`${props.side}-${row}-${col}`}
             position={position}
           />
         );
       }
-      face[row] = <group key={`${props.side}-${row}`}>{rowArr}</group>;
+      face[row] = <group userData={{ row }} key={`${props.side}-${row}`}>{rowArr}</group>;
     }
     return face;
   };
@@ -236,47 +362,59 @@ const Face = (props) => {
 
   // maybe we will position the face on the group rather than the cells!
   return (
-    <group rotation={props.rotation} position={props.position}>
+    <group userData={{ side: props.side }} rotation={props.rotation} position={props.position}>
       {renderedFace}
     </group>
   );
 };
 
 const Cube = (props) => {
-  // useFrame((state, delta) => { });
 
   const [cubeArr, setCubeArr] = useState([]);
   const [renderCubeArr, setRenderCubeArr] = useState([]);
+  const [cellsToWin, setCellsToWin] = useState(0)
 
   useEffect(() => {
     console.log("new game:", props.gameNum);
     init();
   }, [props.gameNum]);
 
+  useEffect(() => {
+    if (!cubeArr.length) return;
+    if (cellsToWin === 0) props.didWin(true)
+  }, [cellsToWin])
+
   // for now only take in odd values
   // maybe based on the size of our cube, we should change the groups position to
   // be in the center of the camera
 
   const init = () => {
-    const newCubeArr = createCubeArray(props.size);
+    const [newCubeArr, cellCount] = createCubeArray(props.size);
     const newRenderCubeArr = createCube(newCubeArr);
+    setCellsToWin(cellCount)
     setCubeArr(newCubeArr);
     setRenderCubeArr(newRenderCubeArr);
   };
 
   const createCubeArray = (size) => {
     let array = [];
+    let cellCount = 0;
     for (let side = 0; side < 6; side++) {
       array[side] = [];
       for (let row = 0; row < size; row++) {
         array[side][row] = [];
         for (let col = 0; col < size; col++) {
           let random = Math.random();
-          array[side][row][col] = random > 0.2 ? "o" : "x";
+          if (random > 0.2) {
+            array[side][row][col] = "o"
+            cellCount++
+          } else {
+            array[side][row][col] = "x";
+          }
         }
       }
     }
-    return array;
+    return [array, cellCount];
   };
 
   const createCube = (arr) => {
@@ -304,11 +442,12 @@ const Cube = (props) => {
         case 0:
           cube[side] = (
             <Face
+              setCellsToWin={setCellsToWin}
               key={side}
               side={side}
               gameNum={props.gameNum}
+              didWin={props.didWin}
               cubeArr={arr}
-              setGameStatus={props.setGameStatus}
               rotation={[0, 0, 0]}
               position={[
                 -getScalingFactor(),
@@ -323,11 +462,13 @@ const Cube = (props) => {
         case 1:
           cube[side] = (
             <Face
+              setCellsToWin={setCellsToWin}
               key={side}
               side={side}
               cubeArr={arr}
               gameNum={props.gameNum}
-              setGameStatus={props.setGameStatus}
+              didWin={props.didWin}
+
               rotation={[0, Math.PI / 2, 0]}
               position={[
                 getScalingFactor() + 1.5,
@@ -341,9 +482,10 @@ const Cube = (props) => {
         case 2:
           cube[side] = (
             <Face
+              setCellsToWin={setCellsToWin}
               gameNum={props.gameNum}
+              didWin={props.didWin}
               cubeArr={arr}
-              setGameStatus={props.setGameStatus}
               key={side}
               rotation={[0, Math.PI, 0]}
               position={[
@@ -359,10 +501,12 @@ const Cube = (props) => {
         case 3:
           cube[side] = (
             <Face
+              setCellsToWin={setCellsToWin}
               key={side}
               gameNum={props.gameNum}
+              didWin={props.didWin}
+
               cubeArr={arr}
-              setGameStatus={props.setGameStatus}
               rotation={[0, -Math.PI / 2, 0]}
               position={[
                 -(getScalingFactor() + 1.5),
@@ -377,9 +521,10 @@ const Cube = (props) => {
         case 4:
           cube[side] = (
             <Face
+              setCellsToWin={setCellsToWin}
               gameNum={props.gameNum}
+              didWin={props.didWin}
               cubeArr={arr}
-              setGameStatus={props.setGameStatus}
               key={side}
               rotation={[-Math.PI / 2, 0, 0]}
               position={[
@@ -395,9 +540,10 @@ const Cube = (props) => {
         case 5:
           cube[side] = (
             <Face
+              setCellsToWin={setCellsToWin}
               gameNum={props.gameNum}
+              didWin={props.didWin}
               cubeArr={arr}
-              setGameStatus={props.setGameStatus}
               key={side}
               rotation={[Math.PI / 2, 0, 0]}
               position={[
@@ -419,15 +565,24 @@ const Cube = (props) => {
 };
 
 const Scene = (props) => {
+  const didWin = (didWinBool) => {
+    if (didWinBool) {
+      props.setGamesWon((prevState) => prevState + 1)
+      props.setGameStatus(2)
+    } else {
+      props.setGamesLost((prevState) => prevState + 1)
+      props.setGameStatus(1)
+    }
+  }
   return (
     <div id={styles.scene}>
-      <Canvas>
-        <OrbitControls minDistance={5} maxDistance={9} />
+      <Canvas >
+        <OrbitControls minDistance={7} maxDistance={8} />
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 15, 10]} angle={0.3} />
         <Cube
+          didWin={didWin}
           gameNum={props.gameNum}
-          setGameStatus={props.setGameStatus}
           size={5}
           position={[0, 0, 0]}
         />

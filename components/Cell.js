@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import styles from '../styles/game.module.css'
-
 const colors = ["gold", "violet", "springgreen", "tomato", "lightskyblue"];
 
 const Cell = (props) => {
@@ -76,11 +75,7 @@ const Cell = (props) => {
     }
 
     let clickSurroundingCells = (cellsToClick) => {
-        // console.log('=============')
-        // console.log("Click surrounding cells")
-        // console.log('=============')
         for (let cellId of cellsToClick) {
-            // console.log('Cell to click', cellId)
             let surroundingCell = document.getElementById(cellId); // we have the cell, now get reference from board
             let time = Math.floor(Math.random() * 150) + 100;
             setTimeout(() => surroundingCell.click(), time);

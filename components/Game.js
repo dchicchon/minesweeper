@@ -20,7 +20,12 @@ const Game = (props) => {
         gamesLost={gamesLost}
         gameNum={gameNum}
       />
-      <Scene setGameStatus={setGameStatus} gameNum={gameNum} />
+      <Scene
+        setGameStatus={setGameStatus}
+        setGamesWon={setGamesWon}
+        setGamesLost={setGamesLost}
+        gameNum={gameNum}
+      />
       {/* <Board
                 setInPlay={props.setInPlay}
                 gamesWon={gamesWon}
