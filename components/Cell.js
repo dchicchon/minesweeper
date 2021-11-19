@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import styles from '../styles/game.module.css'
-
 const colors = ["gold", "violet", "springgreen", "tomato", "lightskyblue"];
 
 const Cell = (props) => {
@@ -11,7 +10,6 @@ const Cell = (props) => {
     let [checkedStyle, setCheckedStyle] = useState({});
     // When the game num changes, go ahead and rerender this cell
     useEffect(() => {
-        console.log('update cell')
         // based on props.gameNum, we do things diff
         // let index = props.gameNum % 5; // if i want to change the color
         let index = 0;
@@ -77,11 +75,7 @@ const Cell = (props) => {
     }
 
     let clickSurroundingCells = (cellsToClick) => {
-        // console.log('=============')
-        // console.log("Click surrounding cells")
-        // console.log('=============')
         for (let cellId of cellsToClick) {
-            // console.log('Cell to click', cellId)
             let surroundingCell = document.getElementById(cellId); // we have the cell, now get reference from board
             let time = Math.floor(Math.random() * 150) + 100;
             setTimeout(() => surroundingCell.click(), time);
