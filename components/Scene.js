@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { OrbitControls, Plane, useCursor, Text } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import styles from "../styles/game.module.css";
-import { evilRotate, getOriginalPosition } from "../helpers/helper";
-import { DoubleSide, Vector3 } from "three";
+import { evilRotate } from "../helpers/helper";
 
 // map for checking the out of bounds items
 const map = {
@@ -33,14 +32,14 @@ const Cell = (props) => {
   const [flag, setFlag] = useState(false);
   const [mainText, setMainText] = useState("");
 
-  // run this anytime there is a new game
+  // reset cell
   useEffect(() => {
     setChecked(false);
     setFlag(false);
     setMainText("");
   }, [props.gameNum]);
 
-  // run this if we check this
+  // set flag
   useEffect(() => {
     if (flag) setMainText("?");
     else setMainText("");
@@ -50,58 +49,65 @@ const Cell = (props) => {
 
   // look for mines surrounding the current cell and
   // label the number of mines for mainText
-  const checkMines = (event) => {
+  const checkMines = (event,) => {
     event.stopPropagation();
     if (checked || flag) return;
-    if (props.type === 'x') {
+    if (props.cell.type === 'x') {
       setMainText("x");
       setChecked(true);
       props.didWin(false)
       return
     }
-
-
     setChecked(true);
     let mineNum = 0;
     let validCells = [];
-    let [side, y, x] = props.coordinate;
+    let [side, y, x] = props.cell.coordinate;
+    // memo[props.cell.coordinate] = true;
+    // console.log(memo)
 
     let size = props.cubeArr[0].length;
-    let threeCube = cellRef.current.parent.parent.parent
-    let face = threeCube.children[side].children.map(group => {
-      let row = group.children.map(col => {
-        return col.userData
-      })
-      return row
-    })
+    // let threeCube = cellRef.current.parent.parent.parent
+
+    // might be unnecessary to do this in particular. We should just set it inside of our original cubeArr
+    // let face = threeCube.children[side].children.map(group => {
+    //   let row = group.children.map(col => {
+    //     return col.userData
+    //   })
+    //   return row
+    // })
 
     // Assume we're looking for cells in this face for now
     // ===========================
     // Check edges
     // ===========================
 
+    // side 1 is throwing errors on mines so far
+    if (side === 1) {
+      // console.log()
+    }
+
     // Check top
-    if (y - 1 < 0) {
+    if (y === 0) {
       // check top
       let checkSide = map[side][0] // top
       // we rotate the top and bottom array to compensate for our cube structure
-      let sideArr = [] // Copy 2D array
-      let threeFace = threeCube.children[checkSide]
-      let threeRows = threeFace.children;
+      let sideArr = props.cubeArr[checkSide] // Copy 2D array
+      // let threeFace = threeCube.children[checkSide]
+      // let threeRows = threeFace.children;
 
-      let threeFaceArray = threeRows.map(group => {
-        // what to return 
-        let row = group.children.map(col => {
-          // return an array of userData here
-          return col.userData
-        });
+      // let threeFaceArray = threeRows.map(group => {
+      //   // what to return 
+      //   let row = group.children.map(col => {
+      //     // return an array of userData here
+      //     return col.userData
+      //   });
 
-        return row;
-      })
+      //   return row;
+      // })
 
-      if (side === 4) sideArr = evilRotate(threeFaceArray, 2)
-      else if (side === 5) sideArr = evilRotate(threeFaceArray, 0)
-      else sideArr = evilRotate(threeFaceArray, side)
+      if (side === 4) sideArr = evilRotate(sideArr, 2)
+      else if (side === 5) sideArr = evilRotate(sideArr, 0)
+      else sideArr = evilRotate(sideArr, side)
       // If not at the top left corner
       if (x > 0) {
         // get top left
@@ -126,30 +132,30 @@ const Cell = (props) => {
     // check bottom
     if (y + 1 === size) {
       let checkSide = map[side][2]; // bottom
-      let threeFace = threeCube.children[checkSide]
-      let threeRows = threeFace.children;
+      let sideArr = props.cubeArr[checkSide] // Copy 2D array
+      // let threeFace = threeCube.children[checkSide]
+      // let threeRows = threeFace.children;
 
-      let threeFaceArray = threeRows.map(group => {
-        // what to return 
-        let row = group.children.map(col => {
-          // return an array of userData here
-          return col.userData
-        });
+      // let threeFaceArray = threeRows.map(group => {
+      //   // what to return 
+      //   let row = group.children.map(col => {
+      //     // return an array of userData here
+      //     return col.userData
+      //   });
 
-        return row;
-      })
+      //   return row;
+      // })
 
 
       // we know its the top row
-      let sideArr = []
-      if (side === 4) sideArr = evilRotate(threeFaceArray, 0)
-      else if (side === 5) sideArr = evilRotate(threeFaceArray, 2)
-      else if (side !== 0) sideArr = evilRotate(threeFaceArray, 4 - side)
-      else sideArr = evilRotate(threeFaceArray, 0)
+      if (side === 4) sideArr = evilRotate(sideArr, 0)
+      else if (side === 5) sideArr = evilRotate(sideArr, 2)
+      else if (side !== 0) sideArr = evilRotate(sideArr, 4 - side)
+      else sideArr = evilRotate(sideArr, 0)
 
       if (x > 0) {
         let bottomLeftCell = sideArr[0][x - 1]
-        console.log(bottomLeftCell)
+        // console.log(bottomLeftCell)
         if (bottomLeftCell.type === 'x') mineNum++
         if (!mineNum) validCells.push(bottomLeftCell.coordinate)
       }
@@ -166,26 +172,13 @@ const Cell = (props) => {
     }
 
     // check left
-    if (x - 1 < 0) {
-      let checkSide = map[side][3]
-      let sideArr = []
+    if (x === 0) {
+      let checkSide = map[side][3] // 3 === left
+      let sideArr = props.cubeArr[checkSide]
 
-      let threeFace = threeCube.children[checkSide]
-      let threeRows = threeFace.children;
-
-      let threeFaceArray = threeRows.map(group => {
-        // what to return 
-        let row = group.children.map(col => {
-          // return an array of userData here
-          return col.userData
-        });
-
-        return row;
-      })
-
-      if (side === 4) sideArr = evilRotate(threeFaceArray, 1) // top
-      else if (side === 5) sideArr = evilRotate(threeFaceArray, 3) // bottom
-      else sideArr = evilRotate(threeFaceArray, 0)
+      if (side === 4) sideArr = evilRotate(sideArr, 1) // top
+      else if (side === 5) sideArr = evilRotate(sideArr, 3) // bottom
+      else sideArr = evilRotate(sideArr, 0)
       if (y > 0) {
         // leftTop
         let leftTopCell = sideArr[y - 1][size - 1]
@@ -206,25 +199,11 @@ const Cell = (props) => {
     // check right
     if (x + 1 === size) {
       let checkSide = map[side][1];
-      let sideArr = []
+      let sideArr = props.cubeArr[checkSide]
 
-      let threeFace = threeCube.children[checkSide]
-      let threeRows = threeFace.children;
-
-      let threeFaceArray = threeRows.map(group => {
-        // what to return 
-        let row = group.children.map(col => {
-          // return an array of userData here
-          return col.userData
-        });
-
-        return row;
-      })
-
-
-      if (side === 4) sideArr = evilRotate(threeFaceArray, 3)
-      if (side === 5) sideArr = evilRotate(threeFaceArray, 1)
-      else sideArr = evilRotate(threeFaceArray, 0)
+      if (side === 4) sideArr = evilRotate(sideArr, 3)
+      else if (side === 5) sideArr = evilRotate(sideArr, 1)
+      else sideArr = evilRotate(sideArr, 0)
       if (y > 0) {
         let rightTopCell = sideArr[y - 1][0]
         if (rightTopCell.type === 'x') mineNum++
@@ -251,27 +230,28 @@ const Cell = (props) => {
         if (cellY < 0 || cellY >= size) continue       // dont check out of bounds top and bottom
         if (cellX < 0 || cellX >= size) continue       // dont check out of bounds right and left
         if (row === 0 && col === 0) continue;          /// dont check same cell
-        let surroundingCell = face[cellY][cellX];
+        let surroundingCell = props.cubeArr[side][cellY][cellX];
         if (surroundingCell.type === "x") mineNum++;
         else if (!mineNum) validCells.push(surroundingCell.coordinate)
       }
     }
+
+    props.setCellsToWin(prevState => prevState - 1)
+
     if (mineNum === 0) {
       setMainText("-");
       clickSurroundingCells(event, validCells)
     } else {
       setMainText(mineNum);
     }
-    props.setCellsToWin(prevState => {
-      console.log("Current Cells to get:", prevState)
-      return prevState - 1
-    })
+
   };
 
-  const clickSurroundingCells = (event, cellsToCheck) => {
+  const clickSurroundingCells = (event, cellsToCheck,) => {
     // click on all of the cells nearby
     let cubeObject = cellRef.current.parent.parent.parent
-
+    // maybe we can pass a memo here of the cells we already checked
+    // cellsToCheck = cellsToCheck.filter(cell => !memo[cell])
     for (let elm = 0; elm < cellsToCheck.length; elm++) {
       let [cellSide, cellY, cellX] = cellsToCheck[elm]
       let cellToClick = cubeObject.children[cellSide].children[cellY].children[cellX] // clicking on the cell reference here
@@ -287,16 +267,17 @@ const Cell = (props) => {
     return "orange";
   };
 
+  const placeFlag = (event) => {
+    event.stopPropagation();
+    setFlag(!flag);
+  }
+
   return (
     <Plane
       ref={cellRef}
-      userData={{ coordinate: props.coordinate, type: props.type }}
       scale={1}
       onClick={checkMines}
-      onContextMenu={(e) => {
-        e.stopPropagation();
-        setFlag(!flag);
-      }}
+      onContextMenu={placeFlag}
       onPointerEnter={(e) => {
         e.stopPropagation();
         hover(true);
@@ -314,8 +295,8 @@ const Cell = (props) => {
         anchorY="middle"
         depthOffset={-1}
       >
-        {/* {props.text} */}
-        {mainText}
+        {/* {mainText} */}
+        {mainText ? mainText : props.cell.type}
       </Text>
       <meshPhongMaterial color={colorStyle()} />
     </Plane>
@@ -341,13 +322,14 @@ const Face = (props) => {
         rowArr[col] = (
           <Cell
             key={`${props.side}-${row}-${col}`}
-            name={`${props.side}-${row}-${col}`}
+            // name={`${props.side}-${row}-${col}`}
+            cell={props.cubeArr[props.side][row][col]}
             setCellsToWin={props.setCellsToWin}
             coordinate={[props.side, row, col]}
             gameNum={props.gameNum}
             didWin={props.didWin}
             cubeArr={props.cubeArr}
-            type={props.cubeArr[props.side][row][col]}
+            type={props.cubeArr[props.side][row][col].type}
             position={position}
           />
         );
@@ -405,10 +387,10 @@ const Cube = (props) => {
         for (let col = 0; col < size; col++) {
           let random = Math.random();
           if (random > 0.2) {
-            array[side][row][col] = "o"
+            array[side][row][col] = { coordinate: [side, row, col], type: "o" }
             cellCount++
           } else {
-            array[side][row][col] = "x";
+            array[side][row][col] = { coordinate: [side, row, col], type: "x" };
           }
         }
       }
@@ -467,7 +449,6 @@ const Cube = (props) => {
               cubeArr={arr}
               gameNum={props.gameNum}
               didWin={props.didWin}
-
               rotation={[0, Math.PI / 2, 0]}
               position={[
                 getScalingFactor() + 1.5,
@@ -576,7 +557,7 @@ const Scene = (props) => {
   return (
     <div id={styles.scene}>
       <Canvas >
-        <OrbitControls minDistance={7} maxDistance={8} />
+        <OrbitControls minDistance={9} maxDistance={9} />
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 15, 10]} angle={0.3} />
         <Cube
