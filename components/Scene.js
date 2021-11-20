@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { OrbitControls, Plane, useCursor, Text } from "@react-three/drei";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas} from "@react-three/fiber";
 import styles from "../styles/game.module.css";
 import { evilRotate } from "../helpers/helper";
 
