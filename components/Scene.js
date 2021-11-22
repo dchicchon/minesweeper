@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { OrbitControls, Plane, useCursor, Text } from "@react-three/drei";
-import { Canvas} from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import styles from "../styles/game.module.css";
 import { evilRotate } from "../helpers/helper";
 
@@ -8,7 +8,7 @@ import { evilRotate } from "../helpers/helper";
 const map = {
   // top, right, bottom, left
   0: [4, 1, 5, 3],
-  1: [4, 2, 5, 1],
+  1: [4, 2, 5, 0],
   2: [4, 3, 5, 1],
   3: [4, 0, 5, 2],
   4: [2, 1, 0, 3],
@@ -47,44 +47,47 @@ const Cell = (props) => {
 
   useCursor(hovered);
 
+
+  const colorStyle = () => {
+    if (hovered) return "hotpink";
+    if (checked && props.cell.type === "x") return "red";
+    if (checked) return "lightblue";
+    return "orange";
+  };
+
+  const placeFlag = (event) => {
+    event.stopPropagation();
+    setFlag(!flag);
+  }
+
+  const addToMemo = (value, memo) => {
+    if (memo[value]) return;
+    memo[value] = value;
+  }
+
+
   // look for mines surrounding the current cell and
   // label the number of mines for mainText
-  const checkMines = (event,) => {
+  const checkMines = (event, memo = {}) => {
     event.stopPropagation();
     if (checked || flag) return;
+    setChecked(true);
     if (props.cell.type === 'x') {
       setMainText("x");
-      setChecked(true);
       props.didWin(false)
       return
     }
-    setChecked(true);
     let mineNum = 0;
     let validCells = [];
     let [side, y, x] = props.cell.coordinate;
-    // memo[props.cell.coordinate] = true;
-    // console.log(memo)
-
     let size = props.cubeArr[0].length;
-    // let threeCube = cellRef.current.parent.parent.parent
 
     // might be unnecessary to do this in particular. We should just set it inside of our original cubeArr
-    // let face = threeCube.children[side].children.map(group => {
-    //   let row = group.children.map(col => {
-    //     return col.userData
-    //   })
-    //   return row
-    // })
 
     // Assume we're looking for cells in this face for now
     // ===========================
     // Check edges
     // ===========================
-
-    // side 1 is throwing errors on mines so far
-    if (side === 1) {
-      // console.log()
-    }
 
     // Check top
     if (y === 0) {
@@ -92,34 +95,22 @@ const Cell = (props) => {
       let checkSide = map[side][0] // top
       // we rotate the top and bottom array to compensate for our cube structure
       let sideArr = props.cubeArr[checkSide] // Copy 2D array
-      // let threeFace = threeCube.children[checkSide]
-      // let threeRows = threeFace.children;
-
-      // let threeFaceArray = threeRows.map(group => {
-      //   // what to return 
-      //   let row = group.children.map(col => {
-      //     // return an array of userData here
-      //     return col.userData
-      //   });
-
-      //   return row;
-      // })
 
       if (side === 4) sideArr = evilRotate(sideArr, 2)
       else if (side === 5) sideArr = evilRotate(sideArr, 0)
       else sideArr = evilRotate(sideArr, side)
       // If not at the top left corner
       if (x > 0) {
-        // get top left
         let topLeftCell = sideArr[size - 1][x - 1]
         if (topLeftCell.type === 'x') mineNum++
+        // if (!mineNum) memo[topLeftCell.coordinate] = topLeftCell.coordinate
         if (!mineNum) validCells.push(topLeftCell.coordinate)
-
       }
       // if not at the top right corner
       if (x < size - 1) {
         let topRightCell = sideArr[size - 1][x + 1]
         if (topRightCell.type === 'x') mineNum++
+        if (!mineNum) memo[topRightCell.coordinate] = topRightCell.coordinate
         if (!mineNum) validCells.push(topRightCell.coordinate)
         // get top right
       }
@@ -127,25 +118,13 @@ const Cell = (props) => {
       let topCenterCell = sideArr[size - 1][x]
       if (topCenterCell.type === 'x') mineNum++
       if (!mineNum) validCells.push(topCenterCell.coordinate)
+      // if (!mineNum) memo[topCenterCell.coordinate] = topCenterCell.coordinate
 
     }
     // check bottom
     if (y + 1 === size) {
       let checkSide = map[side][2]; // bottom
       let sideArr = props.cubeArr[checkSide] // Copy 2D array
-      // let threeFace = threeCube.children[checkSide]
-      // let threeRows = threeFace.children;
-
-      // let threeFaceArray = threeRows.map(group => {
-      //   // what to return 
-      //   let row = group.children.map(col => {
-      //     // return an array of userData here
-      //     return col.userData
-      //   });
-
-      //   return row;
-      // })
-
 
       // we know its the top row
       if (side === 4) sideArr = evilRotate(sideArr, 0)
@@ -157,6 +136,7 @@ const Cell = (props) => {
         let bottomLeftCell = sideArr[0][x - 1]
         // console.log(bottomLeftCell)
         if (bottomLeftCell.type === 'x') mineNum++
+        // if (!mineNum) memo[bottomLeftCell.coordinate] = bottomLeftCell.coordinate
         if (!mineNum) validCells.push(bottomLeftCell.coordinate)
       }
 
@@ -164,37 +144,45 @@ const Cell = (props) => {
         let bottomRightCell = sideArr[0][x + 1]
         if (bottomRightCell.type === 'x') mineNum++
         if (!mineNum) validCells.push(bottomRightCell.coordinate)
+        // if (!mineNum) memo[bottomRightCell.coordinate] - bottomRightCell.coordinate
       }
 
       let bottomCenterCell = sideArr[0][x]
       if (bottomCenterCell.type === 'x') mineNum++
       if (!mineNum) validCells.push(bottomCenterCell.coordinate)
+      // if (!mineNum) memo[bottomCenterCell.coordinate] = bottomCenterCell.coordinate
     }
 
     // check left
     if (x === 0) {
+
       let checkSide = map[side][3] // 3 === left
       let sideArr = props.cubeArr[checkSide]
 
       if (side === 4) sideArr = evilRotate(sideArr, 1) // top
       else if (side === 5) sideArr = evilRotate(sideArr, 3) // bottom
       else sideArr = evilRotate(sideArr, 0)
+
       if (y > 0) {
         // leftTop
         let leftTopCell = sideArr[y - 1][size - 1]
         if (leftTopCell.type === 'x') mineNum++
+        // if (!mineNum) memo[leftTopCell.coordinate] = leftTopCell.coordinate
         if (!mineNum) validCells.push(leftTopCell.coordinate)
+
       }
       if (y < size - 1) {
         let leftBottomCell = sideArr[y + 1][size - 1]
         if (leftBottomCell.type === 'x') mineNum++
         if (!mineNum) validCells.push(leftBottomCell.coordinate)
+        // if (!mineNum) memo[leftBottomCell.coordinate] = leftBottomCell.coordinate
 
       }
 
       let leftCenterCell = sideArr[y][size - 1]
       if (leftCenterCell.type === 'x') mineNum++
       if (!mineNum) validCells.push(leftCenterCell.coordinate)
+      // if (!mineNum) memo[leftCenterCell.coordinate] = leftCenterCell.coordinate
     }
     // check right
     if (x + 1 === size) {
@@ -208,19 +196,23 @@ const Cell = (props) => {
         let rightTopCell = sideArr[y - 1][0]
         if (rightTopCell.type === 'x') mineNum++
         if (!mineNum) validCells.push(rightTopCell.coordinate)
+        // if (!mineNum) memo[rightTopCell.coordinate] = rightTopCell.coordinate
       }
 
       if (y < size - 1) {
         let rightBottomCell = sideArr[y + 1][0]
         if (rightBottomCell.type === 'x') mineNum++
         if (!mineNum) validCells.push(rightBottomCell.coordinate)
+        // if (!mineNum) memo[rightBottomCell.coordinate] = rightBottomCell.coordinate
       }
 
       let rightCenterCell = sideArr[y][0]
       if (rightCenterCell.type === 'x') mineNum++
       if (!mineNum) validCells.push(rightCenterCell.coordinate)
+      // if (!mineNum) memo[rightCenterCell.coordinate] = rightCenterCell.coordinate
     }
     // ===========================
+
 
     // Check surrounding cells on main face
     for (let row = -1; row <= 1; row++) {
@@ -232,11 +224,11 @@ const Cell = (props) => {
         if (row === 0 && col === 0) continue;          /// dont check same cell
         let surroundingCell = props.cubeArr[side][cellY][cellX];
         if (surroundingCell.type === "x") mineNum++;
+        // else if (!mineNum) memo[surroundingCell.coordinate] = surroundingCell.coordinate
         else if (!mineNum) validCells.push(surroundingCell.coordinate)
+
       }
     }
-
-    props.setCellsToWin(prevState => prevState - 1)
 
     if (mineNum === 0) {
       setMainText("-");
@@ -245,31 +237,27 @@ const Cell = (props) => {
       setMainText(mineNum);
     }
 
+    // decrease the number of cells to win
+    props.setCellsToWin(prevState => {
+      // console.log('cells to win:', prevState - 1)
+      return prevState - 1
+    })
+
   };
 
-  const clickSurroundingCells = (event, cellsToCheck,) => {
+  const clickSurroundingCells = (event, cellsToCheck, memo) => {
     // click on all of the cells nearby
     let cubeObject = cellRef.current.parent.parent.parent
-    // maybe we can pass a memo here of the cells we already checked
-    // cellsToCheck = cellsToCheck.filter(cell => !memo[cell])
-    for (let elm = 0; elm < cellsToCheck.length; elm++) {
-      let [cellSide, cellY, cellX] = cellsToCheck[elm]
-      let cellToClick = cubeObject.children[cellSide].children[cellY].children[cellX] // clicking on the cell reference here
-      let time = Math.floor(Math.random() * 500) + 250;
+    // console.log(cellsToCheck)
+    let elm = 0;
+    for (let cell of cellsToCheck) {
+      let [cellSide, cellY, cellX] = cell
+      let cellToClick = cubeObject.children[cellSide].children[cellY].children[cellX] // cell to click
+      let time = Math.floor(Math.random() * 500) + 100 * elm + 250;
       setTimeout(() => cellToClick.__r3f.handlers.onClick(event), time);
+      elm++
+
     }
-  }
-
-  const colorStyle = () => {
-    if (hovered) return "hotpink";
-    if (checked && props.type === "x") return "red";
-    if (checked) return "lightblue";
-    return "orange";
-  };
-
-  const placeFlag = (event) => {
-    event.stopPropagation();
-    setFlag(!flag);
   }
 
   return (
@@ -295,8 +283,8 @@ const Cell = (props) => {
         anchorY="middle"
         depthOffset={-1}
       >
-        {/* {mainText} */}
-        {mainText ? mainText : props.cell.type}
+        {mainText}
+        {/* {mainText ? mainText : props.cell.type} */}
       </Text>
       <meshPhongMaterial color={colorStyle()} />
     </Plane>
@@ -322,14 +310,11 @@ const Face = (props) => {
         rowArr[col] = (
           <Cell
             key={`${props.side}-${row}-${col}`}
-            // name={`${props.side}-${row}-${col}`}
             cell={props.cubeArr[props.side][row][col]}
             setCellsToWin={props.setCellsToWin}
-            coordinate={[props.side, row, col]}
             gameNum={props.gameNum}
             didWin={props.didWin}
             cubeArr={props.cubeArr}
-            type={props.cubeArr[props.side][row][col].type}
             position={position}
           />
         );
@@ -371,6 +356,7 @@ const Cube = (props) => {
 
   const init = () => {
     const [newCubeArr, cellCount] = createCubeArray(props.size);
+    console.log("Cells To win initial:", cellCount)
     const newRenderCubeArr = createCube(newCubeArr);
     setCellsToWin(cellCount)
     setCubeArr(newCubeArr);
@@ -390,7 +376,7 @@ const Cube = (props) => {
             array[side][row][col] = { coordinate: [side, row, col], type: "o" }
             cellCount++
           } else {
-            array[side][row][col] = { coordinate: [side, row, col], type: "x" };
+            array[side][row][col] = { type: "x" };
           }
         }
       }
@@ -563,7 +549,7 @@ const Scene = (props) => {
         <Cube
           didWin={didWin}
           gameNum={props.gameNum}
-          size={5}
+          size={4}
           position={[0, 0, 0]}
         />
         {/* <Box position={[0, 0, 0]} /> */}
