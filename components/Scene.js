@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { OrbitControls, Plane, useCursor, Text } from "@react-three/drei";
+import { EffectComposer, Bloom, Outline } from "@react-three/postprocessing";
 import { Canvas } from "@react-three/fiber";
 import styles from "../styles/game.module.css";
 import { evilRotate } from "../helpers/helper";
+import { Vector3 } from "three";
 
 // map for checking the out of bounds items
 const map = {
@@ -59,12 +61,6 @@ const Cell = (props) => {
     event.stopPropagation();
     setFlag(!flag);
   }
-
-  const addToMemo = (value, memo) => {
-    if (memo[value]) return;
-    memo[value] = value;
-  }
-
 
   // look for mines surrounding the current cell and
   // label the number of mines for mainText
@@ -263,7 +259,7 @@ const Cell = (props) => {
   return (
     <Plane
       ref={cellRef}
-      scale={1}
+      scale={0.95 }
       onClick={checkMines}
       onContextMenu={placeFlag}
       onPointerEnter={(e) => {
@@ -276,7 +272,9 @@ const Cell = (props) => {
       }}
       position={props.position}
     >
+
       <Text
+        lookAt={new Vector3(1, 0, 0)}
         fontSize={0.2}
         color="black"
         anchorX="center"
@@ -356,7 +354,7 @@ const Cube = (props) => {
 
   const init = () => {
     const [newCubeArr, cellCount] = createCubeArray(props.size);
-    console.log("Cells To win initial:", cellCount)
+    // console.log("Cells To win initial:", cellCount)
     const newRenderCubeArr = createCube(newCubeArr);
     setCellsToWin(cellCount)
     setCubeArr(newCubeArr);
@@ -546,10 +544,12 @@ const Scene = (props) => {
         <OrbitControls minDistance={9} maxDistance={9} />
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 15, 10]} angle={0.3} />
+        <spotLight position={[10, -15, -30]} angle={0.3} />
+
         <Cube
           didWin={didWin}
           gameNum={props.gameNum}
-          size={4}
+          size={5}
           position={[0, 0, 0]}
         />
         {/* <Box position={[0, 0, 0]} /> */}
