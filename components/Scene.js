@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { OrbitControls, Plane, useCursor, Text } from "@react-three/drei";
-import { EffectComposer, Bloom, Outline } from "@react-three/postprocessing";
+import { OrbitControls, Plane, useCursor, Text, useContextBridge } from "@react-three/drei";
+// import { EffectComposer, Bloom, Outline } from "@react-three/postprocessing";
 import { Canvas } from "@react-three/fiber";
 import styles from "../styles/game.module.css";
-import { evilRotate } from "../helpers/helper";
+import { evilRotate } from "../utils/helper";
 import { Vector3 } from "three";
+import { DispatchContext, StateContext, useDispatchContext, useStateContext } from "../utils/GameContext";
+import { SET_LOSE, SET_WIN } from "../utils/actions";
 
 // map for checking the out of bounds items
 const map = {
@@ -28,6 +30,9 @@ const map = {
 // {/* https://github.com/protectwise/troika/blob/a2be90a573d69827a9d5abe47a4c53d083647239/packages/troika-three-text/src/Text.js#L91 */ }
 
 const Cell = (props) => {
+  const state = useStateContext();
+  const dispatch = useDispatchContext()
+
   const cellRef = useRef(null);
   const [hovered, hover] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -36,10 +41,11 @@ const Cell = (props) => {
 
   // reset cell
   useEffect(() => {
+    console.log("Start Cell")
     setChecked(false);
     setFlag(false);
     setMainText("");
-  }, [props.gameNum]);
+  }, [state.gameNumber]);
 
   // set flag
   useEffect(() => {
@@ -70,8 +76,7 @@ const Cell = (props) => {
     setChecked(true);
     if (props.cell.type === 'x') {
       setMainText("x");
-      props.didWin(false)
-      return
+      return dispatch({ type: SET_LOSE })
     }
     let mineNum = 0;
     let validCells = [];
@@ -259,7 +264,7 @@ const Cell = (props) => {
   return (
     <Plane
       ref={cellRef}
-      scale={0.95 }
+      scale={0.95}
       onClick={checkMines}
       onContextMenu={placeFlag}
       onPointerEnter={(e) => {
@@ -290,13 +295,6 @@ const Cell = (props) => {
 };
 
 const Face = (props) => {
-  const [renderedFace, setRenderedFace] = useState([]);
-
-  useEffect(() => {
-    let face = createFace();
-    setRenderedFace(face);
-  }, [props.gameNum]);
-
   const createFace = () => {
     let face = [];
     let size = props.cubeArr[0].length;
@@ -310,8 +308,6 @@ const Face = (props) => {
             key={`${props.side}-${row}-${col}`}
             cell={props.cubeArr[props.side][row][col]}
             setCellsToWin={props.setCellsToWin}
-            gameNum={props.gameNum}
-            didWin={props.didWin}
             cubeArr={props.cubeArr}
             position={position}
           />
@@ -321,31 +317,31 @@ const Face = (props) => {
     }
     return face;
   };
-
   // For some reason, this messes with the rotation for the face
 
   // maybe we will position the face on the group rather than the cells!
   return (
     <group userData={{ side: props.side }} rotation={props.rotation} position={props.position}>
-      {renderedFace}
+      {createFace()}
     </group>
   );
 };
 
 const Cube = (props) => {
+  const state = useStateContext()
+  const dispatch = useDispatchContext()
 
   const [cubeArr, setCubeArr] = useState([]);
   const [renderCubeArr, setRenderCubeArr] = useState([]);
   const [cellsToWin, setCellsToWin] = useState(0)
 
   useEffect(() => {
-    console.log("new game:", props.gameNum);
     init();
-  }, [props.gameNum]);
+  }, [state.gameNumber]);
 
   useEffect(() => {
     if (!cubeArr.length) return;
-    if (cellsToWin === 0) props.didWin(true)
+    if (cellsToWin === 0) return dispatch({ type: SET_WIN })
   }, [cellsToWin])
 
   // for now only take in odd values
@@ -410,8 +406,6 @@ const Cube = (props) => {
               setCellsToWin={setCellsToWin}
               key={side}
               side={side}
-              gameNum={props.gameNum}
-              didWin={props.didWin}
               cubeArr={arr}
               rotation={[0, 0, 0]}
               position={[
@@ -431,8 +425,6 @@ const Cube = (props) => {
               key={side}
               side={side}
               cubeArr={arr}
-              gameNum={props.gameNum}
-              didWin={props.didWin}
               rotation={[0, Math.PI / 2, 0]}
               position={[
                 getScalingFactor() + 1.5,
@@ -447,8 +439,6 @@ const Cube = (props) => {
           cube[side] = (
             <Face
               setCellsToWin={setCellsToWin}
-              gameNum={props.gameNum}
-              didWin={props.didWin}
               cubeArr={arr}
               key={side}
               rotation={[0, Math.PI, 0]}
@@ -467,9 +457,6 @@ const Cube = (props) => {
             <Face
               setCellsToWin={setCellsToWin}
               key={side}
-              gameNum={props.gameNum}
-              didWin={props.didWin}
-
               cubeArr={arr}
               rotation={[0, -Math.PI / 2, 0]}
               position={[
@@ -486,8 +473,6 @@ const Cube = (props) => {
           cube[side] = (
             <Face
               setCellsToWin={setCellsToWin}
-              gameNum={props.gameNum}
-              didWin={props.didWin}
               cubeArr={arr}
               key={side}
               rotation={[-Math.PI / 2, 0, 0]}
@@ -505,8 +490,6 @@ const Cube = (props) => {
           cube[side] = (
             <Face
               setCellsToWin={setCellsToWin}
-              gameNum={props.gameNum}
-              didWin={props.didWin}
               cubeArr={arr}
               key={side}
               rotation={[Math.PI / 2, 0, 0]}
@@ -528,16 +511,9 @@ const Cube = (props) => {
   return <group>{renderCubeArr}</group>;
 };
 
-const Scene = (props) => {
-  const didWin = (didWinBool) => {
-    if (didWinBool) {
-      props.setGamesWon((prevState) => prevState + 1)
-      props.setGameStatus(2)
-    } else {
-      props.setGamesLost((prevState) => prevState + 1)
-      props.setGameStatus(1)
-    }
-  }
+const Scene = () => {
+  const state = useStateContext();
+  const ContextBridge = useContextBridge(StateContext, DispatchContext)
   return (
     <div id={styles.scene}>
       <Canvas >
@@ -545,14 +521,12 @@ const Scene = (props) => {
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 15, 10]} angle={0.3} />
         <spotLight position={[10, -15, -30]} angle={0.3} />
-
-        <Cube
-          didWin={didWin}
-          gameNum={props.gameNum}
-          size={5}
-          position={[0, 0, 0]}
-        />
-        {/* <Box position={[0, 0, 0]} /> */}
+        <ContextBridge>
+          <Cube
+            size={5}
+            position={[0, 0, 0]}
+          />
+        </ContextBridge>
       </Canvas>
     </div>
   );

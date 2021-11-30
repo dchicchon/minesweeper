@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from '../styles/game.module.css'
+import { useStateContext } from "../utils/GameContext";
 
 const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -9,26 +10,26 @@ const formatTime = (seconds) => {
     return time;
 };
 
-const Dashboard = (props) => {
-    // Change anytime gameNum changes
+const Dashboard = () => {
+    const state = useStateContext()
     const [seconds, setSeconds] = useState(0);
 
     useEffect(() => {
         let timer = "";
-        if (props.gameStatus === 0) {
+        if (state.gameStatus === 0) {
             setSeconds(0);
             timer = setInterval(() => {
                 setSeconds((prevState) => prevState + 1);
             }, 1000);
         }
         return () => clearInterval(timer);
-    }, [props.gameStatus]);
+    }, [state.gameStatus]);
 
     return (
         <div id={styles.dashboard}>
             <p>Time: {formatTime(seconds)}</p>
-            <p>Games Won: {props.gamesWon}</p>
-            <p>Games Lost: {props.gamesLost} </p>
+            <p>Games Won: {state.gamesWon}</p>
+            <p>Games Lost: {state.gamesLost} </p>
             {/* <p>Tiles Left: 25</p> */}
             {/* <p>Bombs: 20</p> */}
         </div>
