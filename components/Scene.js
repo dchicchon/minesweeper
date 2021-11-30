@@ -8,7 +8,6 @@ import { Vector3 } from "three";
 import { DispatchContext, StateContext, useDispatchContext, useStateContext } from "../utils/GameContext";
 import { SET_LOSE, SET_WIN } from "../utils/actions";
 
-// map for checking the out of bounds items
 const map = {
   // top, right, bottom, left
   0: [4, 1, 5, 3],
@@ -18,16 +17,6 @@ const map = {
   4: [2, 1, 0, 3],
   5: [0, 1, 2, 3],
 };
-
-// 3d matrix
-// https://www.haroldserrano.com/blog/2014/12/27/introduction-to-3d-mathematics
-
-// could be used to add text maybe
-// https://www.ilyameerovich.com/simple-3d-text-meshes-in-three-js/
-// https://codesandbox.io/s/sparks-and-effects-sbf2i?from-embed=&file=/src/Text.js
-
-// /* Using Text */ 
-// {/* https://github.com/protectwise/troika/blob/a2be90a573d69827a9d5abe47a4c53d083647239/packages/troika-three-text/src/Text.js#L91 */ }
 
 const Cell = (props) => {
   const state = useStateContext();
@@ -41,7 +30,6 @@ const Cell = (props) => {
 
   // reset cell
   useEffect(() => {
-    console.log("Start Cell")
     setChecked(false);
     setFlag(false);
     setMainText("");
