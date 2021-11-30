@@ -1,16 +1,21 @@
-import styles from '../styles/index.module.css'
+import styles from "../styles/index.module.css";
 import React, { useState } from "react";
-import MainMenu from '../components/MainMenu'
-import Game from '../components/Game'
+import MainMenu from "../components/MainMenu";
+import Game from "../components/Game";
+import { GameProvider } from "../utils/GameContext";
 
 const AppState = () => {
   const [inPlay, setInPlay] = useState(false);
   if (inPlay) {
-    return <Game setInPlay={setInPlay} />;
+    return (
+      <GameProvider>
+        <Game setInPlay={setInPlay} />
+      </GameProvider>
+    );
   } else {
     return <MainMenu setInPlay={setInPlay} />;
   }
-}
+};
 
 const Minesweeper = () => {
   return (
@@ -20,4 +25,4 @@ const Minesweeper = () => {
   );
 };
 
-export default Minesweeper
+export default Minesweeper;
