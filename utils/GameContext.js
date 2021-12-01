@@ -28,7 +28,7 @@ export const createCubeArray = (size) => {
     return [array, cellCount];
 };
 
-const [arr, count] = createCubeArray(5)
+const [arr, count] = createCubeArray(4)
 const initialState = {
     gameNumber: 0,
     gameStatus: 0,
