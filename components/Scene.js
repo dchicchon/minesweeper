@@ -4,9 +4,10 @@ import { OrbitControls, Plane, useCursor, Text, useContextBridge } from "@react-
 import { Canvas } from "@react-three/fiber";
 import styles from "../styles/game.module.css";
 import { evilRotate } from "../utils/helper";
-import { Vector3 } from "three";
+import { PlaneBufferGeometry, Vector3 } from "three";
 import { DispatchContext, StateContext, useDispatchContext, useStateContext } from "../utils/GameContext";
 import { SET_LOSE, SET_WIN } from "../utils/actions";
+import { MeshBasicMaterial } from "three";
 
 const map = {
   // top, right, bottom, left
@@ -41,7 +42,6 @@ const Cell = (props) => {
   }, [flag]);
 
   useCursor(hovered);
-
 
   const colorStyle = () => {
     if (hovered) return "hotpink";
@@ -246,7 +246,7 @@ const Cell = (props) => {
   }
 
   return (
-    <Plane
+    <mesh
       ref={cellRef}
       scale={0.95}
       onClick={checkMines}
@@ -261,9 +261,9 @@ const Cell = (props) => {
       }}
       position={props.position}
     >
-
+      <planeGeometry args={[1, 1]} />
+      <meshBasicMaterial color={colorStyle()} />
       <Text
-        lookAt={new Vector3(1, 0, 0)}
         fontSize={0.2}
         color="black"
         anchorX="center"
@@ -271,10 +271,8 @@ const Cell = (props) => {
         depthOffset={-1}
       >
         {mainText}
-        {/* {mainText ? mainText : props.cell.type} */}
       </Text>
-      <meshPhongMaterial color={colorStyle()} />
-    </Plane>
+    </mesh>
   );
 };
 
@@ -289,6 +287,7 @@ const Face = (props) => {
       let rowArr = [];
       for (let col = 0; col < size; col++) {
         let position = [col - 1, size - 2 - row, 0];
+        // console.log(position)
         rowArr[col] = (
           <Cell
             key={`${props.side}-${row}-${col}`}
@@ -333,7 +332,7 @@ const Cube = (props) => {
   // be in the center of the camera
 
   const init = () => {
-    const newRenderCubeArr = createCube(state.cubeArr);
+    const newRenderCubeArr = createCube();
     setRenderCubeArr(newRenderCubeArr);
   };
 
@@ -358,7 +357,7 @@ const Cube = (props) => {
   //   return [array, cellCount];
   // };
 
-  const createCube = (arr) => {
+  const createCube = () => {
     let cube = [];
 
     // Theres an axis that needs to be updated if we shrink/grow cube
@@ -480,15 +479,11 @@ const Cube = (props) => {
 };
 
 const Scene = () => {
-  const state = useStateContext();
   const ContextBridge = useContextBridge(StateContext, DispatchContext)
   return (
     <div id={styles.scene}>
       <Canvas >
         <OrbitControls minDistance={9} maxDistance={9} />
-        <ambientLight intensity={0.5} />
-        <spotLight position={[10, 15, 10]} angle={0.3} />
-        <spotLight position={[10, -15, -30]} angle={0.3} />
         <ContextBridge>
           <Cube
             size={5}
