@@ -7,3 +7,4 @@ export const SET_WIN = "SET_WIN";
 export const SET_LOSE = "SET_LOSE";
 export const NEW_GAME = "NEW_GAME";
 export const EXIT_GAME = "EXIT_GAME";
+export const DECREASE_CELL_NUMBER = 'DECREASE_CELL_NUMBER'

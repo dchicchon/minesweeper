@@ -7,12 +7,34 @@ export const DispatchContext = createContext();
 export const useDispatchContext = () => useContext(DispatchContext)
 export const useStateContext = () => useContext(StateContext);
 
+export const createCubeArray = (size) => {
+    let array = [];
+    let cellCount = 0;
+    for (let side = 0; side < 6; side++) {
+        array[side] = [];
+        for (let row = 0; row < size; row++) {
+            array[side][row] = [];
+            for (let col = 0; col < size; col++) {
+                let random = Math.random();
+                if (random > 0.2) {
+                    array[side][row][col] = { coordinate: [side, row, col], type: "o" }
+                    cellCount++
+                } else {
+                    array[side][row][col] = { type: "x" };
+                }
+            }
+        }
+    }
+    return [array, cellCount];
+};
+
+const [arr, count] = createCubeArray(5)
 const initialState = {
-    gamesWon: 0,
-    gamesLost: 0,
     gameNumber: 0,
     gameStatus: 0,
     lives: 3,
+    cellsToWin: count,
+    cubeArr: arr,
     inPlay: false
 }
 

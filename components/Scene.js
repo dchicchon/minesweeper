@@ -21,7 +21,6 @@ const map = {
 const Cell = (props) => {
   const state = useStateContext();
   const dispatch = useDispatchContext()
-
   const cellRef = useRef(null);
   const [hovered, hover] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -69,7 +68,7 @@ const Cell = (props) => {
     let mineNum = 0;
     let validCells = [];
     let [side, y, x] = props.cell.coordinate;
-    let size = props.cubeArr[0].length;
+    let size = state.cubeArr[0].length;
 
     // might be unnecessary to do this in particular. We should just set it inside of our original cubeArr
 
@@ -83,7 +82,7 @@ const Cell = (props) => {
       // check top
       let checkSide = map[side][0] // top
       // we rotate the top and bottom array to compensate for our cube structure
-      let sideArr = props.cubeArr[checkSide] // Copy 2D array
+      let sideArr = state.cubeArr[checkSide] // Copy 2D array
 
       if (side === 4) sideArr = evilRotate(sideArr, 2)
       else if (side === 5) sideArr = evilRotate(sideArr, 0)
@@ -113,7 +112,7 @@ const Cell = (props) => {
     // check bottom
     if (y + 1 === size) {
       let checkSide = map[side][2]; // bottom
-      let sideArr = props.cubeArr[checkSide] // Copy 2D array
+      let sideArr = state.cubeArr[checkSide] // Copy 2D array
 
       // we know its the top row
       if (side === 4) sideArr = evilRotate(sideArr, 0)
@@ -146,7 +145,7 @@ const Cell = (props) => {
     if (x === 0) {
 
       let checkSide = map[side][3] // 3 === left
-      let sideArr = props.cubeArr[checkSide]
+      let sideArr = state.cubeArr[checkSide]
 
       if (side === 4) sideArr = evilRotate(sideArr, 1) // top
       else if (side === 5) sideArr = evilRotate(sideArr, 3) // bottom
@@ -176,7 +175,7 @@ const Cell = (props) => {
     // check right
     if (x + 1 === size) {
       let checkSide = map[side][1];
-      let sideArr = props.cubeArr[checkSide]
+      let sideArr = state.cubeArr[checkSide]
 
       if (side === 4) sideArr = evilRotate(sideArr, 3)
       else if (side === 5) sideArr = evilRotate(sideArr, 1)
@@ -202,7 +201,6 @@ const Cell = (props) => {
     }
     // ===========================
 
-
     // Check surrounding cells on main face
     for (let row = -1; row <= 1; row++) {
       for (let col = -1; col <= 1; col++) {
@@ -211,7 +209,7 @@ const Cell = (props) => {
         if (cellY < 0 || cellY >= size) continue       // dont check out of bounds top and bottom
         if (cellX < 0 || cellX >= size) continue       // dont check out of bounds right and left
         if (row === 0 && col === 0) continue;          /// dont check same cell
-        let surroundingCell = props.cubeArr[side][cellY][cellX];
+        let surroundingCell = state.cubeArr[side][cellY][cellX];
         if (surroundingCell.type === "x") mineNum++;
         // else if (!mineNum) memo[surroundingCell.coordinate] = surroundingCell.coordinate
         else if (!mineNum) validCells.push(surroundingCell.coordinate)
@@ -227,11 +225,9 @@ const Cell = (props) => {
     }
 
     // decrease the number of cells to win
-    props.setCellsToWin(prevState => {
-      // console.log('cells to win:', prevState - 1)
-      return prevState - 1
+    return dispatch({
+      type: 'DECREASE_CELL_NUMBER'
     })
-
   };
 
   const clickSurroundingCells = (event, cellsToCheck, memo) => {
@@ -283,9 +279,11 @@ const Cell = (props) => {
 };
 
 const Face = (props) => {
+
+  let state = useStateContext()
   const createFace = () => {
     let face = [];
-    let size = props.cubeArr[0].length;
+    let size = state.cubeArr[0].length;
     // console.log(props.cubeArr);
     for (let row = 0; row < size; row++) {
       let rowArr = [];
@@ -294,9 +292,8 @@ const Face = (props) => {
         rowArr[col] = (
           <Cell
             key={`${props.side}-${row}-${col}`}
-            cell={props.cubeArr[props.side][row][col]}
+            cell={state.cubeArr[props.side][row][col]}
             setCellsToWin={props.setCellsToWin}
-            cubeArr={props.cubeArr}
             position={position}
           />
         );
@@ -319,52 +316,47 @@ const Cube = (props) => {
   const state = useStateContext()
   const dispatch = useDispatchContext()
 
-  const [cubeArr, setCubeArr] = useState([]);
+  // const [cubeArr, setCubeArr] = useState([]);
   const [renderCubeArr, setRenderCubeArr] = useState([]);
-  const [cellsToWin, setCellsToWin] = useState(0)
+  // const [cellsToWin, setCellsToWin] = useState(0)
 
   useEffect(() => {
     init();
   }, [state.gameNumber]);
 
   useEffect(() => {
-    if (!cubeArr.length) return;
-    if (cellsToWin === 0) return dispatch({ type: SET_WIN })
-  }, [cellsToWin])
+    if (state.cellsToWin === 0) return dispatch({ type: SET_WIN })
+  }, [state.cellsToWin])
 
   // for now only take in odd values
   // maybe based on the size of our cube, we should change the groups position to
   // be in the center of the camera
 
   const init = () => {
-    const [newCubeArr, cellCount] = createCubeArray(props.size);
-    // console.log("Cells To win initial:", cellCount)
-    const newRenderCubeArr = createCube(newCubeArr);
-    setCellsToWin(cellCount)
-    setCubeArr(newCubeArr);
+    const newRenderCubeArr = createCube(state.cubeArr);
     setRenderCubeArr(newRenderCubeArr);
   };
 
-  const createCubeArray = (size) => {
-    let array = [];
-    let cellCount = 0;
-    for (let side = 0; side < 6; side++) {
-      array[side] = [];
-      for (let row = 0; row < size; row++) {
-        array[side][row] = [];
-        for (let col = 0; col < size; col++) {
-          let random = Math.random();
-          if (random > 0.2) {
-            array[side][row][col] = { coordinate: [side, row, col], type: "o" }
-            cellCount++
-          } else {
-            array[side][row][col] = { type: "x" };
-          }
-        }
-      }
-    }
-    return [array, cellCount];
-  };
+  // const createCubeArray = (size) => {
+  //   let array = [];
+  //   let cellCount = 0;
+  //   for (let side = 0; side < 6; side++) {
+  //     array[side] = [];
+  //     for (let row = 0; row < size; row++) {
+  //       array[side][row] = [];
+  //       for (let col = 0; col < size; col++) {
+  //         let random = Math.random();
+  //         if (random > 0.2) {
+  //           array[side][row][col] = { coordinate: [side, row, col], type: "o" }
+  //           cellCount++
+  //         } else {
+  //           array[side][row][col] = { type: "x" };
+  //         }
+  //       }
+  //     }
+  //   }
+  //   return [array, cellCount];
+  // };
 
   const createCube = (arr) => {
     let cube = [];
@@ -391,10 +383,8 @@ const Cube = (props) => {
         case 0:
           cube[side] = (
             <Face
-              setCellsToWin={setCellsToWin}
               key={side}
               side={side}
-              cubeArr={arr}
               rotation={[0, 0, 0]}
               position={[
                 -getScalingFactor(),
@@ -409,10 +399,8 @@ const Cube = (props) => {
         case 1:
           cube[side] = (
             <Face
-              setCellsToWin={setCellsToWin}
               key={side}
               side={side}
-              cubeArr={arr}
               rotation={[0, Math.PI / 2, 0]}
               position={[
                 getScalingFactor() + 1.5,
@@ -426,16 +414,14 @@ const Cube = (props) => {
         case 2:
           cube[side] = (
             <Face
-              setCellsToWin={setCellsToWin}
-              cubeArr={arr}
               key={side}
+              side={side}
               rotation={[0, Math.PI, 0]}
               position={[
                 getScalingFactor(),
                 -getScalingFactor(),
                 -(getScalingFactor() + 1.5),
               ]}
-              side={side}
             />
           );
           break;
@@ -443,9 +429,7 @@ const Cube = (props) => {
         case 3:
           cube[side] = (
             <Face
-              setCellsToWin={setCellsToWin}
               key={side}
-              cubeArr={arr}
               rotation={[0, -Math.PI / 2, 0]}
               position={[
                 -(getScalingFactor() + 1.5),
@@ -460,8 +444,6 @@ const Cube = (props) => {
         case 4:
           cube[side] = (
             <Face
-              setCellsToWin={setCellsToWin}
-              cubeArr={arr}
               key={side}
               rotation={[-Math.PI / 2, 0, 0]}
               position={[
@@ -477,8 +459,6 @@ const Cube = (props) => {
         case 5:
           cube[side] = (
             <Face
-              setCellsToWin={setCellsToWin}
-              cubeArr={arr}
               key={side}
               rotation={[Math.PI / 2, 0, 0]}
               position={[
