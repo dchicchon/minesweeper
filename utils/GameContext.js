@@ -16,7 +16,7 @@ export const createCubeArray = (size) => {
             array[side][row] = [];
             for (let col = 0; col < size; col++) {
                 let random = Math.random();
-                if (random > 0.2) {
+                if (random > 0.25) {
                     array[side][row][col] = { coordinate: [side, row, col], type: "o" }
                     cellCount++
                 } else {
@@ -35,7 +35,8 @@ const initialState = {
     lives: 3,
     cellsToWin: count,
     cubeArr: arr,
-    inPlay: false
+    inPlay: false,
+    time: 0
 }
 
 export const GameProvider = ({ children }) => {

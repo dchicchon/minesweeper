@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "../styles/game.module.css";
-import { useStateContext } from "../utils/GameContext";
+import { SET_TIME } from "../utils/actions";
+import { useDispatchContext, useStateContext } from "../utils/GameContext";
 
 const formatTime = (ms) => {
   // every 10 of ms is a real second
@@ -8,14 +9,14 @@ const formatTime = (ms) => {
   let mill = ms >= 10 ? ms - seconds * 10 : ms;
   const mins = Math.floor(seconds / 60);
   const secs = seconds >= 60 ? seconds - mins * 60 : seconds;
-  const time = `${mins < 10 ? "0" + mins : mins}:${
-    secs < 10 ? "0" + secs : secs
-  }.${mill}`;
+  const time = `${mins < 10 ? "0" + mins : mins}:${secs < 10 ? "0" + secs : secs
+    }.${mill}`;
   return time;
 };
 
 const Dashboard = () => {
   const state = useStateContext();
+  const dispatch = useDispatchContext();
   const [milliseconds, setMilliseconds] = useState(0);
 
   useEffect(() => {
@@ -25,6 +26,11 @@ const Dashboard = () => {
       timer = setInterval(() => {
         setMilliseconds((prevState) => prevState + 1);
       }, 100);
+    } else if (state.gameStatus === 2) {
+      dispatch({
+        type: SET_TIME,
+        payload: formatTime(milliseconds)
+      })
     }
     return () => clearInterval(timer);
   }, [state.gameStatus]);

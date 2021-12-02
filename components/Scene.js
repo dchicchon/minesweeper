@@ -5,22 +5,20 @@ import {
   Text,
   useContextBridge,
 } from "@react-three/drei";
-// import { EffectComposer, Bloom, Outline } from "@react-three/postprocessing";
+import { useSpring, a } from '@react-spring/three'
 import { Canvas } from "@react-three/fiber";
 import styles from "../styles/game.module.css";
 import { evilRotate } from "../utils/helper";
-
-import { PlaneBufferGeometry, Vector3 } from "three";
-import { MeshBasicMaterial } from "three";
+import { DECREASE_CELL_NUMBER, SET_LOSE, SET_WIN } from "../utils/actions";
 import {
   DispatchContext,
   StateContext,
   useDispatchContext,
   useStateContext,
 } from "../utils/GameContext";
-import { DECREASE_CELL_NUMBER, SET_LOSE, SET_WIN } from "../utils/actions";
 
-const map = {   
+
+const map = {
   // top, right, bottom, left
   0: [4, 1, 5, 3],
   1: [4, 2, 5, 0],
@@ -30,6 +28,7 @@ const map = {
   5: [0, 1, 2, 3],
 };
 
+
 const Cell = (props) => {
   const state = useStateContext();
   const dispatch = useDispatchContext();
@@ -38,6 +37,7 @@ const Cell = (props) => {
   const [checked, setChecked] = useState(false);
   const [flag, setFlag] = useState(false);
   const [mainText, setMainText] = useState("");
+  const springs = useSpring({ color: hovered ? 'hotpink' : 'orange' })
 
   // reset cell
   useEffect(() => {
@@ -54,10 +54,11 @@ const Cell = (props) => {
 
   useCursor(hovered);
 
+
   const colorStyle = () => {
-    if (hovered) return "hotpink";
     if (checked && props.cell.type === "x") return "red";
     if (checked) return "lightblue";
+    if (hovered) return "hotpink";
     return "orange";
   };
 
@@ -252,8 +253,9 @@ const Cell = (props) => {
     }
   };
 
+
   return (
-    <mesh
+    <a.mesh
       ref={cellRef}
       scale={0.95}
       onClick={checkMines}
@@ -268,8 +270,8 @@ const Cell = (props) => {
       }}
       position={props.position}
     >
-      <planeGeometry args={[1, 1]} />
-      <meshBasicMaterial color={colorStyle()} />
+      <planeGeometry attach='geometry' args={[1, 1, 1]} />
+      <meshPhongMaterial attach='material' color={colorStyle()} />
       <Text
         fontSize={0.2}
         color="black"
@@ -279,7 +281,7 @@ const Cell = (props) => {
       >
         {mainText}
       </Text>
-    </mesh>
+    </a.mesh>
   );
 };
 
@@ -292,7 +294,6 @@ const Face = (props) => {
       let rowArr = [];
       for (let col = 0; col < size; col++) {
         let position = [col - 1, size - 2 - row, 0];
-        // console.log(position)
         rowArr[col] = (
           <Cell
             key={`${props.side}-${row}-${col}`}
@@ -468,11 +469,14 @@ const Cube = (props) => {
 };
 
 const Scene = () => {
+  const state = useStateContext()
   const ContextBridge = useContextBridge(StateContext, DispatchContext)
   return (
     <div id={state.gameStatus ? styles.stop_scene : styles.scene}>
       <Canvas frameloop="demand">
         <OrbitControls minDistance={9} maxDistance={9} />
+        <ambientLight intensity={1} />
+        {/* <directionalLight /> */}
         <ContextBridge>
           <Cube size={4} position={[0, 0, 0]} />
         </ContextBridge>

@@ -6,27 +6,43 @@ import {
   SET_WIN,
   EXIT_GAME,
   DECREASE_CELL_NUMBER,
+  SET_TIME
 } from "./actions";
+
 import { createCubeArray } from "./GameContext";
+
+
 
 export default function reducer(state, action) {
   switch (action.type) {
+    case SET_TIME: {
+      return {
+        ...state,
+        time: action.payload
+      }
+    }
     case CHANGE_IN_PLAY: {
       let { inPlay } = state;
-
       // Exit Game
       if (inPlay) {
         let newState = {
           ...state,
           inPlay: false,
+          time: 0,
         };
         return newState;
       }
       // Enter Game
       else {
+        let [newCube, count] = createCubeArray(4);
         let newState = {
           ...state,
+          gameStatus: 0,
+          lives: 3,
+          time: 0,
           inPlay: true,
+          cellsToWin: count,
+          cubeArr: newCube,
         };
         return newState;
       }
@@ -55,6 +71,7 @@ export default function reducer(state, action) {
         cellsToWin: count,
         cubeArr: newCube,
         gameNumber: newGameNumber,
+        time: 0
       };
     }
     case EXIT_GAME: {
