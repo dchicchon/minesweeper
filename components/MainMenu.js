@@ -52,7 +52,7 @@ const SecretCommands = () => {
         return (
             <div className={styles.secretMenu}>
                 <h4 style={{ margin: '0px' }}>Developer Menu</h4>
-                <p>This is a console for me only. If you aren't Danny, get out of the menu please! -Danny</p>
+                <p>This is a console for me only. If you aren&apos;t Danny, get out of the menu please! -Danny</p>
                 <div className={styles.secretCommand}>
                     <input value={command} onChange={(e) => setCommand(e.target.value)} placeholder='Enter Command' className={styles.secretInput} />
                     <button onClick={executeCommand} className='button'>Execute</button>

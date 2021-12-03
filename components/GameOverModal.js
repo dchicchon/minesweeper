@@ -17,8 +17,6 @@ const TopScoresTable = ({ state, data }) => {
     } else {
       let isWinner = false;
       for (let key in data) {
-        console.log(data[key])
-        console.log(state.time)
         if (data[key] > state.time) {
           isWinner = true
           break;
@@ -46,10 +44,10 @@ const TopScoresTable = ({ state, data }) => {
   }
   if (!showTable) return ''
   return (<div style={{ padding: '5px' }}>
-    <h5>You've placed in the top scores! Add your name to the list</h5>
+    <h5>You&apos;ve placed in the top scores! Add your name to the list</h5>
     <div className={styles.score}>
       1.<input value={name} onChange={(e) => setName(e.target.value)} maxLength={5} />:
-      <p style={{ 'margin': '0px' }}>{state.time}</p>
+      <p style={{ margin: '0px' }}>{state.time}</p>
       <button className='button' onClick={handleSubmit}>Submit</button>
     </div>
   </div>)
