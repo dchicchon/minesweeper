@@ -8,12 +8,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@react-spring/three": "^9.3.1",
     "@react-three/drei": "^7.20.5",
     "@react-three/fiber": "^7.0.19",
     "@react-three/postprocessing": "^2.0.5",
+    "axios": "^0.24.0",
     "next": "12.0.3",
     "react": "17.0.2",
     "react-dom": "17.0.2",
+    "swr": "^1.1.0",
     "three": "^0.134.0"
   },
   "devDependencies": {
