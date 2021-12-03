@@ -37,7 +37,8 @@ const Cell = (props) => {
   const [checked, setChecked] = useState(false);
   const [flag, setFlag] = useState(false);
   const [mainText, setMainText] = useState("");
-  const springs = useSpring({ color: hovered ? 'hotpink' : 'orange' })
+
+  const springs = useSpring({ color: hovered ? 0 : 150 })
 
   // reset cell
   useEffect(() => {

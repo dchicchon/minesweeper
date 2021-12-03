@@ -61,8 +61,6 @@ const GameOverModal = () => {
   const { data, error } = useSWR('/api/scores', fetcher)
 
 
-
-
   if (!state.gameStatus) {
     return "";
   }
