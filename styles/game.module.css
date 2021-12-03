@@ -14,8 +14,23 @@
 
 #dashboard {
   display: flex;
-  gap: 15px;
+  gap: 25px;
   color: gold;
+}
+
+.score {
+  display: flex;
+  padding: 10px;
+}
+
+.score > input {
+  text-align: center;
+  background: none;
+  color: gold;
+  outline: none;
+  border: none;
+  width: fit-content;
+  border-bottom: 1px solid gold;
 }
 
 #dashboard > p {
@@ -24,19 +39,6 @@
 
 .row {
   display: flex;
-}
-
-#lifeContainer {
-  display: flex;
-  gap: 7px;
-  align-items: center;
-}
-.life {
-  width: 10px;
-  height: 10px;
-  border-radius: 25px;
-  background-color: gold;
-  align-self: auto;
 }
 
 .cell {
@@ -63,15 +65,19 @@
   border: 1px solid gold;
   padding: 1rem;
   border-radius: 10px;
+  transform: translateY(120px);
 }
 
 #scene {
   height: 750px;
   width: 100%;
-  /* min-width: 500px; */
-  /* min-height: 600px; */
-  /* max-width: 600px; */
-  /* max-height: 700px; */
+  pointer-events: all;
+}
+
+#stop_scene {
+  height: 750px;
+  width: 100%;
+  pointer-events: none;
 }
 
 @media (max-width: 768px) {
@@ -87,6 +93,11 @@
   #scene {
     height: 400px;
     width: 90vw;
+  }
+  #stop_scene {
+    height: 400px;
+    width: 90vw;
+    pointer-events: none;
   }
 
   .cell {

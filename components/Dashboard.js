@@ -1,46 +1,45 @@
-import React, { useState, useEffect, useReducer } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "../styles/game.module.css";
+import { SET_TIME } from "../utils/actions";
+import { useDispatchContext, useStateContext } from "../utils/GameContext";
 
-import { useGameContext } from "../utils/GameContext";
-import reducer from "../utils/reducer";
-
-const formatTime = (seconds) => {
+const formatTime = (ms) => {
+  // every 10 of ms is a real second
+  let seconds = Math.floor(ms / 10);
+  let mill = ms >= 10 ? ms - seconds * 10 : ms;
   const mins = Math.floor(seconds / 60);
   const secs = seconds >= 60 ? seconds - mins * 60 : seconds;
-  const time = `${mins < 10 ? "0" + mins : mins}:${
-    secs < 10 ? "0" + secs : secs
-  }`;
+  const time = `${mins < 10 ? "0" + mins : mins}:${secs < 10 ? "0" + secs : secs
+    }.${mill}`;
   return time;
 };
 
-const Dashboard = (props) => {
-  // Change anytime gameNum changes
-  const [seconds, setSeconds] = useState(0);
-  const initialState = useGameContext();
-  const [state, dispatch] = useReducer(reducer, initialState);
+const Dashboard = () => {
+  const state = useStateContext();
+  const dispatch = useDispatchContext();
+  const [milliseconds, setMilliseconds] = useState(0);
 
   useEffect(() => {
     let timer = "";
-    if (props.gameStatus === 0) {
-      setSeconds(0);
+    if (state.gameStatus === 0) {
+      setMilliseconds(0);
       timer = setInterval(() => {
-        setSeconds((prevState) => prevState + 1);
-      }, 1000);
+        setMilliseconds((prevState) => prevState + 1);
+      }, 100);
+    } else if (state.gameStatus === 2) {
+      dispatch({
+        type: SET_TIME,
+        payload: formatTime(milliseconds)
+      })
     }
     return () => clearInterval(timer);
   }, [state.gameStatus]);
 
   return (
     <div id={styles.dashboard}>
-      <p>Time: {formatTime(seconds)}</p>
-      <p>Games Won: {state.gamesWon}</p>
-      <p>Games Lost: {state.gamesLost} </p>
-      <p>Lives left: </p>
-      <div id={styles.lifeContainer}>
-        {[...Array(state.lives)].map((e, i) => (
-          <div className={styles.life} key={i} />
-        ))}
-      </div>
+      <p>Time: {formatTime(milliseconds)}</p>
+      {/* <p>Tiles Left: 25</p> */}
+      {/* <p>Bombs: 20</p> */}
     </div>
   );
 };

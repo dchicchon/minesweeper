@@ -1,27 +1,54 @@
-import React, { useContext, createContext, useState } from "react";
+import React, { useContext, createContext, useReducer } from 'react'
+import reducer from './reducer';
 
-const GameContext = createContext();
+export const StateContext = createContext();
+export const DispatchContext = createContext();
 
-export const useGameContext = () => useContext(GameContext);
+export const useDispatchContext = () => useContext(DispatchContext)
+export const useStateContext = () => useContext(StateContext);
+
+export const createCubeArray = (size) => {
+    let array = [];
+    let cellCount = 0;
+    for (let side = 0; side < 6; side++) {
+        array[side] = [];
+        for (let row = 0; row < size; row++) {
+            array[side][row] = [];
+            for (let col = 0; col < size; col++) {
+                let random = Math.random();
+                if (random > 0.25) {
+                    array[side][row][col] = { coordinate: [side, row, col], type: "o" }
+                    cellCount++
+                } else {
+                    array[side][row][col] = { type: "x" };
+                }
+            }
+        }
+    }
+    return [array, cellCount];
+};
+
+const [arr, count] = createCubeArray(4)
+const initialState = {
+    gameNumber: 0,
+    gameStatus: 0,
+    lives: 3,
+    cellsToWin: count,
+    cubeArr: arr,
+    inPlay: false,
+    time: 0
+}
 
 export const GameProvider = ({ children }) => {
-  const gamesWon = 0;
-  const gamesLost = 0;
-  const gameNumber = 0;
-  const gameStatus = 0;
-  const lives = 3;
+    const [state, dispatch] = useReducer(reducer, initialState)
 
-  //   let [gamesWon, setGamesWon] = useState(0);
-  //   let [gamesLost, setGamesLost] = useState(0);
-  //   let [gameNum, setGameNum] = useState(0); // anytime game num change, rerender the dashboard for timer sake
-  //   let [gameStatus, setGameStatus] = useState(0); // 0 is active, 1 is game lost, 2 is game won
-  //   let [lives, setLives] = useState(3);
-
-  return (
-    <GameContext.Provider
-      value={{ lives, gamesWon, gamesLost, gameStatus, lives, gameNumber }}
-    >
-      {children}
-    </GameContext.Provider>
-  );
-};
+    return (
+        <DispatchContext.Provider value={dispatch}>
+            <StateContext.Provider
+                value={state}
+            >
+                {children}
+            </StateContext.Provider>
+        </DispatchContext.Provider>
+    )
+}

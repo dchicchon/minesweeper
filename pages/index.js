@@ -1,26 +1,19 @@
-import styles from "../styles/index.module.css";
-import React, { useState } from "react";
-import MainMenu from "../components/MainMenu";
-import Game from "../components/Game";
-import { GameProvider } from "../utils/GameContext";
+import React from "react";
+import { GameProvider, useStateContext } from '../utils/GameContext';
+import MainMenu from '../components/MainMenu'
+import Game from '../components/Game'
+import styles from '../styles/index.module.css'
 
 const AppState = () => {
-  const [inPlay, setInPlay] = useState(false);
-  if (inPlay) {
-    return (
-      <GameProvider>
-        <Game setInPlay={setInPlay} />
-      </GameProvider>
-    );
-  } else {
-    return <MainMenu setInPlay={setInPlay} />;
-  }
-};
-
+  const state = useStateContext()
+  return state.inPlay ? <Game /> : <MainMenu />
+}
 const Minesweeper = () => {
   return (
     <div id={styles.minesweeper}>
-      <AppState />
+      <GameProvider>
+        <AppState />
+      </GameProvider>
     </div>
   );
 };
